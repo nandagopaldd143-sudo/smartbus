@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,878 +6,386 @@
 
     <title>SmartBus - Live Tracking</title>
 
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
     <style>
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
         }
 
         body {
-            min-height: 100vh;
-            background:
-                radial-gradient(circle at top right, #164e63, transparent 35%),
-                linear-gradient(135deg, #020617, #0f172a, #111827);
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+        }
+
+        .header {
+            background: #111827;
             color: white;
             padding: 18px;
+            text-align: center;
         }
 
-        .container {
-            max-width: 800px;
-            margin: auto;
-        }
-
-        header {
-            padding: 12px 5px 25px;
-        }
-
-        .brand {
-            color: #38bdf8;
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        header h1 {
-            font-size: 30px;
-            margin-top: 8px;
-        }
-
-        .back {
-            display: inline-block;
-            margin-top: 12px;
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .tracking-card {
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 24px;
-            padding: 22px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.30);
-        }
-
-        .bus-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 22px;
-        }
-
-        .bus-title h2 {
-            font-size: 27px;
-        }
-
-        .live {
-            background: rgba(34,197,94,0.15);
-            color: #4ade80;
-            border: 1px solid rgba(74,222,128,0.3);
-            padding: 7px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+        .header h2 {
+            margin: 0;
         }
 
         .info {
-            margin-bottom: 17px;
+            background: white;
+            margin: 12px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
         }
 
-        .label {
-            color: #94a3b8;
-            font-size: 12px;
-            margin-bottom: 6px;
+        .info p {
+            margin: 7px 0;
         }
 
-        .value {
-            font-size: 17px;
+        .status {
             font-weight: bold;
-        }
-
-        .map-section {
-            margin-top: 25px;
-        }
-
-        .map-title {
-            font-size: 21px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-
-        .map-subtitle {
-            color: #94a3b8;
-            font-size: 13px;
-            margin-bottom: 15px;
         }
 
         #map {
-            width: 100%;
-            height: 400px;
-            border-radius: 18px;
+            width: calc(100% - 24px);
+            height: 65vh;
+            margin: 12px;
+            border-radius: 15px;
             overflow: hidden;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.18);
         }
 
-        .gps-button {
-            width: 100%;
-            margin-top: 15px;
+        .location-box {
+            background: white;
+            margin: 12px;
             padding: 15px;
-            border: none;
-            border-radius: 14px;
-            background: #0ea5e9;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
         }
 
-        .gps-button:disabled {
-            background: #475569;
-            cursor: not-allowed;
+        .location-box h3 {
+            margin-top: 0;
         }
 
-        .location-status,
-        .address-status {
-            margin-top: 14px;
-            padding: 13px;
-            border-radius: 14px;
-            text-align: center;
-            font-size: 13px;
+        #address {
+            color: #374151;
             line-height: 1.5;
         }
 
-        .location-status {
-            background: rgba(14,165,233,0.10);
-            color: #cbd5e1;
-        }
-
-        .address-status {
-            background: rgba(34,197,94,0.10);
-            border: 1px solid rgba(74,222,128,0.20);
-            color: #e2e8f0;
-        }
-
-        footer {
-            text-align: center;
-            color: #64748b;
-            font-size: 12px;
-            padding: 22px 0 8px;
-        }
-
-        @media (max-width: 500px) {
-            body {
-                padding: 12px;
-            }
-
-            header h1 {
-                font-size: 25px;
-            }
-
-            .tracking-card {
-                padding: 17px;
-            }
-
-            #map {
-                height: 320px;
-            }
-
-            .bus-title h2 {
-                font-size: 23px;
-            }
+        .loading {
+            color: #6b7280;
         }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="header">
+    <h2>🚌 SmartBus Live Tracking</h2>
+</div>
 
-    <header>
-        <div class="brand">
-            SMARTBUS • LIVE TRACKING
-        </div>
+<div class="info">
 
-        <h1>
-            🚌 College Bus Tracking
-        </h1>
+    <p>
+        <strong>Bus Number:</strong>
+        {{ bus.bus_number }}
+    </p>
 
-        <a href="{% url 'home' %}" class="back">
-            ← Back to Dashboard
-        </a>
-    </header>
+    <p>
+        <strong>Destination:</strong>
+        {{ bus.destination }}
+    </p>
 
-
-    <div class="tracking-card">
-
-        <div class="bus-title">
-            <h2>
-                📍 Bus {{ bus.bus_number }}
-            </h2>
-
-            <div class="live">
-                ● LIVE
-            </div>
-        </div>
-
-
-        <div class="info">
-            <div class="label">
-                DEPARTURE
-            </div>
-
-            <div class="value">
-                ⏰ {{ bus.time }}
-            </div>
-        </div>
-
-
-        <div class="info">
-            <div class="label">
-                DESTINATION
-            </div>
-
-            <div class="value">
-                📍 {{ bus.destination }}
-            </div>
-        </div>
-
-
-        <div class="map-section">
-
-            <div class="map-title">
-                🗺️ Current Bus Location
-            </div>
-
-            <div class="map-subtitle">
-                Live GPS location with Google Maps
-            </div>
-
-            <div id="map"></div>
-
-            <button
-                id="gpsButton"
-                class="gps-button"
-                onclick="startDriverGPS()">
-
-                📍 Start Live GPS
-
-            </button>
-
-            <div
-                id="locationStatus"
-                class="location-status">
-
-                🔵 GPS not started
-
-            </div>
-
-            <div
-                id="addressStatus"
-                class="address-status">
-
-                📍 Street address will appear here
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <footer>
-        SmartBus © 2026 • College Bus Tracking System
-    </footer>
+    <p>
+        <strong>Status:</strong>
+        <span class="status" id="status">
+            Connecting...
+        </span>
+    </p>
 
 </div>
 
+<div id="map"></div>
+
+<div class="location-box">
+
+    <h3>📍 Current Bus Location</h3>
+
+    <div id="address" class="loading">
+        Finding current location...
+    </div>
+
+</div>
+
+<!-- Leaflet JS -->
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
 
 <script>
 
-    const busId = {{ bus.id }};
+const busId = "{{ bus.id }}";
 
-    const defaultLatitude = 12.5036;
-    const defaultLongitude = 79.0608;
-
-    let map;
-    let busMarker;
-    let gpsWatchId = null;
-    let geocoder;
+let map;
+let busMarker;
+let firstLocation = true;
 
 
-    /*
-        GOOGLE MAP INITIALIZATION
-    */
+/* --------------------------------
+   CREATE MAP
+-------------------------------- */
 
-    function initMap() {
+function createMap(latitude, longitude) {
 
-        const defaultPosition = {
-            lat: defaultLatitude,
-            lng: defaultLongitude
-        };
+    map = L.map("map").setView(
+        [latitude, longitude],
+        16
+    );
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution:
+                '&copy; OpenStreetMap contributors'
+        }
+    ).addTo(map);
+
+}
 
 
-        map = new google.maps.Map(
-            document.getElementById("map"),
-            {
-                center: defaultPosition,
-                zoom: 14,
+/* --------------------------------
+   BUS ICON
+-------------------------------- */
 
-                mapTypeControl: true,
-                streetViewControl: true,
-                fullscreenControl: true,
+const busIcon = L.divIcon({
 
-                zoomControl: true
-            }
+    className: "bus-marker",
+
+    html: `
+        <div style="
+            background:#2563eb;
+            color:white;
+            width:45px;
+            height:45px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:24px;
+            border:3px solid white;
+            box-shadow:0 3px 10px rgba(0,0,0,0.35);
+        ">
+            🚌
+        </div>
+    `,
+
+    iconSize: [45, 45],
+    iconAnchor: [22, 22]
+
+});
+
+
+/* --------------------------------
+   GET BUS LOCATION
+-------------------------------- */
+
+async function getBusLocation() {
+
+    try {
+
+        const response = await fetch(
+            `/api/bus/${busId}/location/`
         );
 
+        if (!response.ok) {
 
-        /*
-            BUS MARKER
-        */
-
-        busMarker =
-            new google.maps.Marker({
-
-                position: defaultPosition,
-
-                map: map,
-
-                title:
-                    "SmartBus {{ bus.bus_number }}",
-
-                label: {
-                    text: "🚌",
-                    fontSize: "24px"
-                }
-
-            });
-
-
-        /*
-            GOOGLE GEOCODER
-        */
-
-        geocoder =
-            new google.maps.Geocoder();
-
-
-        /*
-            INITIAL ADDRESS
-        */
-
-        getStreetAddress(
-            defaultLatitude,
-            defaultLongitude
-        );
-
-
-        /*
-            GET CURRENT SERVER LOCATION
-        */
-
-        updateStudentLocation();
-
-    }
-
-
-    /*
-        STREET ADDRESS
-    */
-
-    function getStreetAddress(
-        latitude,
-        longitude
-    ) {
-
-        const addressBox =
-            document.getElementById(
-                "addressStatus"
+            throw new Error(
+                "Location API error: " + response.status
             );
 
-
-        if (!geocoder) {
-            return;
         }
 
+        const data = await response.json();
 
-        geocoder.geocode(
-
-            {
-                location: {
-                    lat: latitude,
-                    lng: longitude
-                }
-            },
-
-            function(results, status) {
-
-                if (
-                    status === "OK" &&
-                    results &&
-                    results.length > 0
-                ) {
-
-                    addressBox.innerHTML =
-                        "📍 " +
-                        results[0].formatted_address;
-
-                }
-
-                else {
-
-                    addressBox.innerHTML =
-                        "📍 Street address not available";
-
-                }
-
-            }
-
-        );
-
-    }
-
-
-    /*
-        CSRF TOKEN
-    */
-
-    function getCookie(name) {
-
-        let cookieValue = null;
+        const latitude = parseFloat(data.latitude);
+        const longitude = parseFloat(data.longitude);
 
 
         if (
-            document.cookie &&
-            document.cookie !== ""
+            isNaN(latitude) ||
+            isNaN(longitude) ||
+            latitude === 0 ||
+            longitude === 0
         ) {
 
-            const cookies =
-                document.cookie.split(";");
+            document.getElementById("status").innerText =
+                "Waiting for GPS...";
 
-
-            for (
-                let cookie of cookies
-            ) {
-
-                cookie = cookie.trim();
-
-
-                if (
-                    cookie.startsWith(
-                        name + "="
-                    )
-                ) {
-
-                    cookieValue =
-                        decodeURIComponent(
-                            cookie.substring(
-                                name.length + 1
-                            )
-                        );
-
-                    break;
-                }
-
-            }
+            return;
 
         }
 
 
-        return cookieValue;
+        /* CREATE MAP FIRST TIME */
 
-    }
+        if (!map) {
 
+            createMap(
+                latitude,
+                longitude
+            );
 
-    const csrfToken =
-        getCookie("csrftoken");
-
-
-    /*
-        SEND GPS TO DJANGO
-    */
-
-    function sendLocation(
-        latitude,
-        longitude
-    ) {
-
-        const url =
-            `/api/bus/${busId}/location/update/`;
+        }
 
 
-        const formData =
-            new URLSearchParams();
+        /* CREATE / MOVE MARKER */
+
+        if (!busMarker) {
+
+            busMarker = L.marker(
+                [latitude, longitude],
+                {
+                    icon: busIcon
+                }
+            ).addTo(map);
+
+            busMarker.bindPopup(
+                `<b>🚌 BUS ${data.bus}</b><br>
+                 Current Location`
+            );
+
+        } else {
+
+            busMarker.setLatLng(
+                [latitude, longitude]
+            );
+
+        }
 
 
-        formData.append(
-            "latitude",
-            latitude
-        );
+        /* CENTER MAP */
+
+        if (firstLocation) {
+
+            map.setView(
+                [latitude, longitude],
+                17
+            );
+
+            firstLocation = false;
+
+        }
 
 
-        formData.append(
-            "longitude",
+        document.getElementById("status").innerText =
+            "🟢 Live";
+
+
+        /* GET STREET ADDRESS */
+
+        getAddress(
+            latitude,
             longitude
         );
 
+    }
 
-        fetch(
-            url,
-            {
+    catch (error) {
 
-                method: "POST",
+        console.error(error);
 
-                headers: {
-
-                    "X-CSRFToken":
-                        csrfToken,
-
-                    "Content-Type":
-                        "application/x-www-form-urlencoded"
-
-                },
-
-                body:
-                    formData.toString()
-
-            }
-        )
-
-        .then(
-            response =>
-                response.json()
-        )
-
-        .then(
-            data => {
-
-                const status =
-                    document.getElementById(
-                        "locationStatus"
-                    );
-
-
-                if (data.success) {
-
-                    status.innerHTML =
-                        "🟢 GPS Active • Location sent to server";
-
-                }
-
-                else {
-
-                    status.innerHTML =
-                        "🔴 GPS server update failed";
-
-                }
-
-            }
-        )
-
-        .catch(
-            error => {
-
-                console.error(error);
-
-
-                document.getElementById(
-                    "locationStatus"
-                ).innerHTML =
-                    "🔴 Unable to connect to GPS server";
-
-            }
-        );
+        document.getElementById("status").innerText =
+            "🔴 Location unavailable";
 
     }
 
+}
 
-    /*
-        START DRIVER GPS
-    */
 
-    function startDriverGPS() {
+/* --------------------------------
+   GET ACTUAL ADDRESS
+-------------------------------- */
 
-        const status =
-            document.getElementById(
-                "locationStatus"
+async function getAddress(
+    latitude,
+    longitude
+) {
+
+    try {
+
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Address lookup failed"
             );
-
-
-        const button =
-            document.getElementById(
-                "gpsButton"
-            );
-
-
-        if (
-            !navigator.geolocation
-        ) {
-
-            status.innerHTML =
-                "🔴 GPS is not supported.";
-
-            return;
 
         }
 
-
-        status.innerHTML =
-            "🟡 Requesting GPS permission...";
+        const data = await response.json();
 
 
-        button.disabled = true;
+        if (data.display_name) {
 
+            document.getElementById(
+                "address"
+            ).innerText =
+                data.display_name;
 
-        button.innerHTML =
-            "🟢 Live GPS Running";
+        } else {
 
+            document.getElementById(
+                "address"
+            ).innerText =
+                "Address not available";
 
-        gpsWatchId =
-            navigator.geolocation.watchPosition(
-
-                function(position) {
-
-                    const latitude =
-                        position.coords.latitude;
-
-
-                    const longitude =
-                        position.coords.longitude;
-
-
-                    const currentPosition = {
-
-                        lat: latitude,
-
-                        lng: longitude
-
-                    };
-
-
-                    /*
-                        MOVE BUS MARKER
-                    */
-
-                    busMarker.setPosition(
-                        currentPosition
-                    );
-
-
-                    /*
-                        MOVE GOOGLE MAP
-                    */
-
-                    map.setCenter(
-                        currentPosition
-                    );
-
-
-                    map.setZoom(17);
-
-
-                    /*
-                        STREET ADDRESS
-                    */
-
-                    getStreetAddress(
-                        latitude,
-                        longitude
-                    );
-
-
-                    /*
-                        SEND LOCATION
-                    */
-
-                    sendLocation(
-                        latitude,
-                        longitude
-                    );
-
-                },
-
-
-                function(error) {
-
-                    button.disabled =
-                        false;
-
-
-                    button.innerHTML =
-                        "📍 Start Live GPS";
-
-
-                    if (
-                        error.code === 1
-                    ) {
-
-                        status.innerHTML =
-                            "🔴 Location permission denied.";
-
-                    }
-
-                    else if (
-                        error.code === 2
-                    ) {
-
-                        status.innerHTML =
-                            "🔴 GPS location unavailable.";
-
-                    }
-
-                    else if (
-                        error.code === 3
-                    ) {
-
-                        status.innerHTML =
-                            "🔴 GPS request timed out.";
-
-                    }
-
-                    else {
-
-                        status.innerHTML =
-                            "🔴 GPS error.";
-
-                    }
-
-                },
-
-
-                {
-
-                    enableHighAccuracy:
-                        true,
-
-                    maximumAge:
-                        5000,
-
-                    timeout:
-                        10000
-
-                }
-
-            );
+        }
 
     }
 
+    catch (error) {
 
-    /*
-        GET LATEST BUS LOCATION
-    */
+        console.error(error);
 
-    function updateStudentLocation() {
-
-        fetch(
-            `/api/bus/${busId}/location/`
-        )
-
-        .then(
-            response =>
-                response.json()
-        )
-
-        .then(
-            data => {
-
-                if (
-                    data.latitude !== undefined &&
-                    data.longitude !== undefined
-                ) {
-
-                    const latitude =
-                        parseFloat(
-                            data.latitude
-                        );
-
-
-                    const longitude =
-                        parseFloat(
-                            data.longitude
-                        );
-
-
-                    if (
-                        latitude !== 0 &&
-                        longitude !== 0
-                    ) {
-
-                        const position = {
-
-                            lat: latitude,
-
-                            lng: longitude
-
-                        };
-
-
-                        if (busMarker) {
-
-                            busMarker.setPosition(
-                                position
-                            );
-
-                        }
-
-
-                        if (map) {
-
-                            map.setCenter(
-                                position
-                            );
-
-                        }
-
-
-                        getStreetAddress(
-                            latitude,
-                            longitude
-                        );
-
-                    }
-
-                }
-
-            }
-        )
-
-        .catch(
-            error => {
-
-                console.log(
-                    "Location fetch error:",
-                    error
-                );
-
-            }
-        );
+        document.getElementById(
+            "address"
+        ).innerText =
+            "Unable to find street address";
 
     }
 
-
-    /*
-        UPDATE EVERY 5 SECONDS
-    */
-
-    setInterval(
-        updateStudentLocation,
-        5000
-    );
-
-</script>
+}
 
 
-<!--
-    IMPORTANT:
-    Replace YOUR_API_KEY_HERE
-    with your Google Maps API key.
--->
+/* --------------------------------
+   START
+-------------------------------- */
 
-<script
-    async
-    defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKusHQTBxHxsi-vqO-dCt5bdtUYezgspU&callback=initMap">
+getBusLocation();
+
+
+/* --------------------------------
+   UPDATE EVERY 5 SECONDS
+-------------------------------- */
+
+setInterval(
+    getBusLocation,
+    5000
+);
+
 </script>
 
 </body>
