@@ -154,8 +154,8 @@
             cursor: pointer;
         }
 
-        .gps-button:active {
-            transform: scale(0.98);
+        .gps-button.running {
+            background: #16a34a;
         }
 
         .location-info {
@@ -215,6 +215,7 @@
         }
 
         @media (max-width: 600px) {
+
             .header h1 {
                 font-size: 24px;
             }
@@ -237,9 +238,17 @@
 <body>
 
 <div class="header">
-    <h1>🚌 SMARTBUS • LIVE TRACKING</h1>
-    <p>COLLEGE BUS TRACKING SYSTEM</p>
+
+    <h1>
+        🚌 SMARTBUS • LIVE TRACKING
+    </h1>
+
+    <p>
+        COLLEGE BUS TRACKING SYSTEM
+    </p>
+
 </div>
+
 
 <div class="container">
 
@@ -247,36 +256,66 @@
 
         <div class="bus-title">
 
-            <div class="bus-icon">🚌</div>
+            <div class="bus-icon">
+                🚌
+            </div>
 
             <div>
-                <h2>Bus {{ bus.bus_number }}</h2>
-                <span class="live-badge">● LIVE TRACKING</span>
+
+                <h2>
+                    Bus {{ bus.bus_number }}
+                </h2>
+
+                <span class="live-badge">
+                    ● LIVE TRACKING
+                </span>
+
             </div>
 
         </div>
+
 
         <div class="details">
 
             <div class="detail-box">
-                <div class="detail-label">🕐 DEPARTURE</div>
+
+                <div class="detail-label">
+                    🕐 DEPARTURE
+                </div>
+
                 <div class="detail-value">
                     {{ bus.time }}
                 </div>
+
             </div>
 
+
             <div class="detail-box">
-                <div class="detail-label">📍 DESTINATION</div>
+
+                <div class="detail-label">
+                    📍 DESTINATION
+                </div>
+
                 <div class="detail-value">
                     {{ bus.destination }}
                 </div>
+
             </div>
 
         </div>
 
+
         <div class="status">
-            <span id="statusDot" class="status-dot"></span>
-            <span id="statusText">Location unavailable</span>
+
+            <span
+                id="statusDot"
+                class="status-dot">
+            </span>
+
+            <span id="statusText">
+                Waiting for driver GPS...
+            </span>
+
         </div>
 
     </div>
@@ -288,35 +327,51 @@
             📍 Current Bus Location
         </h2>
 
+
         <div id="map"></div>
 
+
+        <!-- BUTTON KEEP PANROM -->
         <button
+            id="liveButton"
             class="gps-button"
-            onclick="startGPS()"
-        >
+            onclick="startLiveTracking()">
+
             📡 START LIVE GPS
+
         </button>
+
 
         <div class="location-info">
 
             <div class="coordinate">
-                <small>Latitude</small>
+
+                <small>
+                    Latitude
+                </small>
+
                 <strong id="latitude">
                     Waiting...
                 </strong>
+
             </div>
 
+
             <div class="coordinate">
-                <small>Longitude</small>
+
+                <small>
+                    Longitude
+                </small>
+
                 <strong id="longitude">
                     Waiting...
                 </strong>
+
             </div>
 
         </div>
 
 
-        <!-- EXACT ADDRESS -->
         <div class="address-box">
 
             <div class="address-title">
@@ -325,16 +380,18 @@
 
             <div
                 id="address"
-                class="address-text"
-            >
+                class="address-text">
+
                 Waiting for GPS location...
+
             </div>
 
             <div
                 id="accuracy"
-                class="accuracy"
-            >
+                class="accuracy">
+
                 GPS accuracy: Waiting...
+
             </div>
 
         </div>
@@ -351,18 +408,25 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+
 <script>
 
 const busId = "{{ bus.id }}";
 
-/* Default map position - Polur */
+
+// ==========================================
+// DEFAULT POLUR LOCATION
+// ==========================================
+
 const defaultLat = 12.5036;
 const defaultLng = 79.0608;
+
 
 const map = L.map("map").setView(
     [defaultLat, defaultLng],
     14
 );
+
 
 L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -374,103 +438,357 @@ L.tileLayer(
 ).addTo(map);
 
 
+// ==========================================
+// BUS MARKER
+// ==========================================
+
 let busMarker = null;
-let gpsWatcher = null;
 
 
-/* Bus icon */
+// BIG VISIBLE BUS ICON
 const busIcon = L.divIcon({
-    className: "bus-marker",
-    html: "🚌",
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+
+    className: "",
+
+    html: `
+        <div style="
+            width:52px;
+            height:52px;
+            background:white;
+            border:3px solid #0ea5e9;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:36px;
+            box-shadow:0 4px 15px rgba(0,0,0,0.6);
+        ">
+            🚌
+        </div>
+    `,
+
+    iconSize: [52, 52],
+
+    iconAnchor: [26, 26],
+
+    popupAnchor: [0, -26]
+
 });
 
 
-/* Show GPS location */
+// ==========================================
+// SHOW BUS LOCATION
+// ==========================================
+
 function showBusLocation(
     latitude,
-    longitude,
-    accuracy = null
+    longitude
 ) {
 
-    document.getElementById("latitude").innerText =
-        Number(latitude).toFixed(6);
-
-    document.getElementById("longitude").innerText =
-        Number(longitude).toFixed(6);
+    latitude = Number(latitude);
+    longitude = Number(longitude);
 
 
-    if (accuracy !== null) {
+    console.log(
+        "LIVE BUS LOCATION:",
+        latitude,
+        longitude
+    );
 
-        document.getElementById("accuracy").innerText =
-            "GPS accuracy: approximately " +
-            Math.round(accuracy) +
-            " metres";
+
+    // Invalid location check
+
+    if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude === 0 ||
+        longitude === 0
+    ) {
+
+        document.getElementById(
+            "statusText"
+        ).innerText =
+            "Waiting for valid driver GPS...";
+
+        return;
 
     }
 
 
-    if (busMarker) {
+    // Latitude
 
-        busMarker.setLatLng([
-            latitude,
-            longitude
-        ]);
+    document.getElementById(
+        "latitude"
+    ).innerText =
+        latitude.toFixed(6);
+
+
+    // Longitude
+
+    document.getElementById(
+        "longitude"
+    ).innerText =
+        longitude.toFixed(6);
+
+
+    // ======================================
+    // CREATE / MOVE MARKER
+    // ======================================
+
+    if (busMarker === null) {
+
+        busMarker =
+            L.marker(
+                [
+                    latitude,
+                    longitude
+                ],
+                {
+                    icon: busIcon,
+
+                    zIndexOffset: 10000
+                }
+            ).addTo(map);
+
+
+        busMarker.bindPopup(
+            "🚌 Bus {{ bus.bus_number }}<br>📍 Live Location"
+        );
+
+
+        console.log(
+            "BUS MARKER CREATED"
+        );
 
     } else {
 
-        busMarker = L.marker(
-            [latitude, longitude],
-            {
-                icon: busIcon
-            }
-        ).addTo(map);
+        busMarker.setLatLng(
+            [
+                latitude,
+                longitude
+            ]
+        );
 
-        busMarker.bindPopup(
-            "🚌 Bus {{ bus.bus_number }}"
+
+        console.log(
+            "BUS MARKER MOVED"
         );
 
     }
 
 
+    // Move map to bus
+
     map.setView(
-        [latitude, longitude],
-        17
+        [
+            latitude,
+            longitude
+        ],
+        17,
+        {
+            animate: true
+        }
     );
 
+
+    // Live status
 
     document
         .getElementById("statusDot")
         .classList.add("live");
 
-    document
-        .getElementById("statusText")
-        .innerText =
-        "Live location available";
+
+    document.getElementById(
+        "statusText"
+    ).innerText =
+        "🟢 Live location available";
 
 
-    /*
-     * Get street/place name
-     */
+    // Address
+
     getAddress(
         latitude,
         longitude
     );
+
 }
 
 
-/*
- * Convert GPS coordinates
- * into street/place name
- */
+// ==========================================
+// GET LOCATION FROM DJANGO
+// ==========================================
+
+async function getBusLocation() {
+
+    try {
+
+        const response =
+            await fetch(
+                `/api/bus/${busId}/location/?t=${Date.now()}`,
+                {
+                    method: "GET",
+
+                    cache: "no-store",
+
+                    headers: {
+                        "Cache-Control":
+                            "no-cache"
+                    }
+                }
+            );
+
+
+        console.log(
+            "Location API status:",
+            response.status
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Server returned " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "DJANGO BUS LOCATION:",
+            data
+        );
+
+
+        if (
+            data.latitude !== undefined &&
+            data.longitude !== undefined
+        ) {
+
+            showBusLocation(
+                data.latitude,
+                data.longitude
+            );
+
+        } else {
+
+            document.getElementById(
+                "statusText"
+            ).innerText =
+                "Waiting for driver GPS...";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Location API error:",
+            error
+        );
+
+
+        document.getElementById(
+            "statusText"
+        ).innerText =
+            "🔴 Unable to get bus location";
+
+    }
+
+}
+
+
+// ==========================================
+// START LIVE TRACKING BUTTON
+// ==========================================
+
+let trackingStarted = false;
+
+let trackingTimer = null;
+
+
+function startLiveTracking() {
+
+    const button =
+        document.getElementById(
+            "liveButton"
+        );
+
+
+    trackingStarted = true;
+
+
+    button.classList.add(
+        "running"
+    );
+
+
+    button.innerText =
+        "🟢 LIVE TRACKING ACTIVE";
+
+
+    document.getElementById(
+        "statusText"
+    ).innerText =
+        "🔄 Getting driver location...";
+
+
+    // Get immediately
+
+    getBusLocation();
+
+
+    // Every 3 seconds
+
+    if (trackingTimer === null) {
+
+        trackingTimer =
+            setInterval(
+                getBusLocation,
+                3000
+            );
+
+    }
+
+}
+
+
+// ==========================================
+// AUTOMATIC START
+// ==========================================
+
+// Page open aana udane location check
+
+getBusLocation();
+
+
+// Every 3 seconds automatic update
+
+setInterval(
+    getBusLocation,
+    3000
+);
+
+
+// ==========================================
+// ADDRESS
+// ==========================================
+
 async function getAddress(
     latitude,
     longitude
 ) {
 
     const addressElement =
-        document.getElementById("address");
+        document.getElementById(
+            "address"
+        );
+
 
     addressElement.innerText =
         "Finding street / place...";
@@ -481,24 +799,32 @@ async function getAddress(
         const url =
             "https://nominatim.openstreetmap.org/reverse" +
             "?format=jsonv2" +
-            "&lat=" + encodeURIComponent(latitude) +
-            "&lon=" + encodeURIComponent(longitude) +
+            "&lat=" +
+            encodeURIComponent(latitude) +
+            "&lon=" +
+            encodeURIComponent(longitude) +
             "&zoom=18" +
             "&addressdetails=1";
 
+
         const response =
-            await fetch(url, {
-                headers: {
-                    "Accept":
-                        "application/json"
+            await fetch(
+                url,
+                {
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
-            });
+            );
 
 
         if (!response.ok) {
+
             throw new Error(
                 "Address service unavailable"
             );
+
         }
 
 
@@ -515,19 +841,20 @@ async function getAddress(
                 data.address;
 
 
+            const parts = [];
+
+
             const street =
                 a.road ||
                 a.pedestrian ||
                 a.residential ||
-                a.neighbourhood ||
                 "";
 
 
             const area =
                 a.suburb ||
+                a.neighbourhood ||
                 a.village ||
-                a.town ||
-                a.city_district ||
                 "";
 
 
@@ -553,11 +880,9 @@ async function getAddress(
                 "";
 
 
-            let parts = [];
-
-
             if (street)
                 parts.push(street);
+
 
             if (
                 area &&
@@ -565,11 +890,13 @@ async function getAddress(
             )
                 parts.push(area);
 
+
             if (
                 city &&
                 city !== area
             )
                 parts.push(city);
+
 
             if (
                 district &&
@@ -577,8 +904,10 @@ async function getAddress(
             )
                 parts.push(district);
 
+
             if (state)
                 parts.push(state);
+
 
             if (postcode)
                 parts.push(postcode);
@@ -605,6 +934,7 @@ async function getAddress(
         }
 
     }
+
     catch (error) {
 
         console.log(
@@ -612,201 +942,12 @@ async function getAddress(
             error
         );
 
+
         addressElement.innerText =
             "Street name temporarily unavailable";
 
     }
 
-}
-
-
-/*
- * START PHONE GPS
- */
-function startGPS() {
-
-    if (!navigator.geolocation) {
-
-        alert(
-            "GPS is not supported on this device."
-        );
-
-        return;
-    }
-
-
-    document.getElementById("statusText").innerText =
-        "Getting exact GPS location...";
-
-
-    gpsWatcher =
-        navigator.geolocation.watchPosition(
-
-            function(position) {
-
-                const latitude =
-                    position.coords.latitude;
-
-                const longitude =
-                    position.coords.longitude;
-
-                const accuracy =
-                    position.coords.accuracy;
-
-
-                showBusLocation(
-                    latitude,
-                    longitude,
-                    accuracy
-                );
-
-
-                /*
-                 * Send location to Django
-                 */
-                fetch(
-                    `/api/bus/${busId}/location/update/`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-
-                            "X-CSRFToken":
-                                getCookie("csrftoken")
-                        },
-
-                        body:
-                            JSON.stringify({
-                                latitude:
-                                    latitude,
-
-                                longitude:
-                                    longitude
-                            })
-                    }
-                )
-                .then(response => {
-
-                    if (!response.ok) {
-
-                        console.log(
-                            "Server GPS update:",
-                            response.status
-                        );
-
-                    }
-
-                })
-                .catch(error => {
-
-                    console.log(
-                        "Server GPS error:",
-                        error
-                    );
-
-                });
-
-            },
-
-            function(error) {
-
-                console.log(
-                    "GPS ERROR:",
-                    error
-                );
-
-
-                document
-                    .getElementById("statusText")
-                    .innerText =
-                    "GPS permission required";
-
-
-                if (
-                    error.code ===
-                    error.PERMISSION_DENIED
-                ) {
-
-                    alert(
-                        "Location permission denied. " +
-                        "Please allow Location permission " +
-                        "for this website."
-                    );
-
-                } else {
-
-                    alert(
-                        "Unable to get GPS location. " +
-                        "Please turn ON Location/GPS."
-                    );
-
-                }
-
-            },
-
-            {
-                enableHighAccuracy: true,
-
-                maximumAge: 5000,
-
-                timeout: 15000
-            }
-
-        );
-
-}
-
-
-/*
- * Django CSRF cookie
- */
-function getCookie(name) {
-
-    let cookieValue = null;
-
-    if (
-        document.cookie &&
-        document.cookie !== ""
-    ) {
-
-        const cookies =
-            document.cookie.split(";");
-
-
-        for (
-            let i = 0;
-            i < cookies.length;
-            i++
-        ) {
-
-            const cookie =
-                cookies[i].trim();
-
-
-            if (
-                cookie.substring(
-                    0,
-                    name.length + 1
-                ) ===
-                name + "="
-            ) {
-
-                cookieValue =
-                    decodeURIComponent(
-                        cookie.substring(
-                            name.length + 1
-                        )
-                    );
-
-                break;
-            }
-        }
-
-    }
-
-    return cookieValue;
 }
 
 </script>
