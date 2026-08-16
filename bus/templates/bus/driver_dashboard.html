@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>SmartBus - Driver Dashboard</title>
+    <title>SmartBus • Driver Dashboard</title>
 
     <style>
         * {
@@ -48,6 +48,7 @@
             color: #94a3b8;
             margin-top: 8px;
             font-size: 14px;
+            line-height: 1.5;
         }
 
         .card {
@@ -93,6 +94,7 @@
             color: #cbd5e1;
             font-size: 14px;
             margin-top: 7px;
+            line-height: 1.5;
         }
 
         .gps-button {
@@ -116,6 +118,15 @@
             background: #16a34a;
         }
 
+        .gps-button.stop {
+            background: #dc2626;
+            margin-top: 10px;
+        }
+
+        .gps-button:disabled {
+            opacity: 0.9;
+        }
+
         .status {
             margin-top: 10px;
             padding: 12px;
@@ -124,6 +135,32 @@
             color: #cbd5e1;
             text-align: center;
             font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .location-box {
+            margin-top: 10px;
+            padding: 13px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.20);
+        }
+
+        .location-title {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .location-text {
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: bold;
+        }
+
+        .accuracy {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-top: 5px;
         }
 
         .logout {
@@ -147,7 +184,6 @@
         }
 
         @media (max-width: 500px) {
-
             body {
                 padding: 12px;
             }
@@ -177,7 +213,8 @@
         </h1>
 
         <div class="subtitle">
-            Start GPS to share your live bus location.
+            Start GPS when the bus service begins.
+            Your phone location will be shared with students.
         </div>
     </header>
 
@@ -185,20 +222,18 @@
     <div class="card">
 
         <h2>
-            Select Your Bus
+            🚌 Select Your Bus
         </h2>
 
 
-        <!-- BUS 5 -->
+        <!-- ================= BUS 5 ================= -->
 
         <div class="bus-card">
 
             <div class="bus-header">
-
                 <div class="bus-number">
                     🚌 Bus 5
                 </div>
-
             </div>
 
             <div class="time">
@@ -215,7 +250,17 @@
                 id="gpsButton5"
                 onclick="startGPS(2, '5')">
 
-                📍 Start Live GPS
+                📡 START LIVE GPS
+
+            </button>
+
+            <button
+                class="gps-button stop"
+                id="stopButton5"
+                onclick="stopGPS('5')"
+                style="display:none;">
+
+                🔴 STOP GPS
 
             </button>
 
@@ -228,19 +273,46 @@
 
             </div>
 
+
+            <div
+                class="location-box"
+                id="locationBox5"
+                style="display:none;">
+
+                <div class="location-title">
+                    📍 DRIVER CURRENT LOCATION
+                </div>
+
+                <div
+                    class="location-text"
+                    id="location5">
+
+                    Waiting...
+
+                </div>
+
+                <div
+                    class="accuracy"
+                    id="accuracy5">
+
+                    GPS accuracy: Waiting...
+
+                </div>
+
+            </div>
+
         </div>
 
 
-        <!-- BUS 46 -->
+
+        <!-- ================= BUS 46 ================= -->
 
         <div class="bus-card">
 
             <div class="bus-header">
-
                 <div class="bus-number">
                     🚌 Bus 46
                 </div>
-
             </div>
 
             <div class="time">
@@ -257,7 +329,17 @@
                 id="gpsButton46"
                 onclick="startGPS(1, '46')">
 
-                📍 Start Live GPS
+                📡 START LIVE GPS
+
+            </button>
+
+            <button
+                class="gps-button stop"
+                id="stopButton46"
+                onclick="stopGPS('46')"
+                style="display:none;">
+
+                🔴 STOP GPS
 
             </button>
 
@@ -267,6 +349,34 @@
                 id="status46">
 
                 🔵 GPS not started
+
+            </div>
+
+
+            <div
+                class="location-box"
+                id="locationBox46"
+                style="display:none;">
+
+                <div class="location-title">
+                    📍 DRIVER CURRENT LOCATION
+                </div>
+
+                <div
+                    class="location-text"
+                    id="location46">
+
+                    Waiting...
+
+                </div>
+
+                <div
+                    class="accuracy"
+                    id="accuracy46">
+
+                    GPS accuracy: Waiting...
+
+                </div>
 
             </div>
 
@@ -293,326 +403,440 @@
 
 <script>
 
-    let activeWatch = null;
+let activeWatch = null;
+let activeBusId = null;
+let activeBusNumber = null;
 
 
-    /*
-        CSRF TOKEN
-    */
+/* ================================
+   CSRF TOKEN
+================================ */
 
-    function getCookie(name) {
+function getCookie(name) {
 
-        let cookieValue = null;
+    let cookieValue = null;
 
+    if (
+        document.cookie &&
+        document.cookie !== ""
+    ) {
 
-        if (
-            document.cookie &&
-            document.cookie !== ""
+        const cookies =
+            document.cookie.split(";");
+
+        for (
+            let cookie of cookies
         ) {
 
-            const cookies =
-                document.cookie.split(";");
+            cookie = cookie.trim();
 
-
-            for (
-                let cookie of cookies
+            if (
+                cookie.startsWith(
+                    name + "="
+                )
             ) {
 
-                cookie = cookie.trim();
+                cookieValue =
+                    decodeURIComponent(
+                        cookie.substring(
+                            name.length + 1
+                        )
+                    );
 
-
-                if (
-                    cookie.startsWith(
-                        name + "="
-                    )
-                ) {
-
-                    cookieValue =
-                        decodeURIComponent(
-                            cookie.substring(
-                                name.length + 1
-                            )
-                        );
-
-                    break;
-                }
-
+                break;
             }
-
         }
-
-
-        return cookieValue;
-
     }
 
-
-    const csrfToken =
-        getCookie("csrftoken");
-
-
-    /*
-        START GPS
-    */
-
-    function startGPS(
-        busId,
-        busNumber
-    ) {
-
-        const button =
-            document.getElementById(
-                "gpsButton" + busNumber
-            );
+    return cookieValue;
+}
 
 
-        const status =
-            document.getElementById(
-                "status" + busNumber
-            );
+const csrfToken =
+    getCookie("csrftoken");
 
 
-        if (!navigator.geolocation) {
+/* ================================
+   START GPS
+================================ */
 
-            status.innerHTML =
-                "🔴 GPS is not supported.";
+function startGPS(
+    busId,
+    busNumber
+) {
 
-            return;
+    const button =
+        document.getElementById(
+            "gpsButton" + busNumber
+        );
 
-        }
+    const stopButton =
+        document.getElementById(
+            "stopButton" + busNumber
+        );
+
+    const status =
+        document.getElementById(
+            "status" + busNumber
+        );
+
+    const locationBox =
+        document.getElementById(
+            "locationBox" + busNumber
+        );
 
 
-        /*
-            Stop previous GPS
-        */
-
-        if (activeWatch !== null) {
-
-            navigator.geolocation.clearWatch(
-                activeWatch
-            );
-
-        }
-
+    if (!navigator.geolocation) {
 
         status.innerHTML =
-            "🟡 Requesting location permission...";
+            "🔴 GPS is not supported on this device.";
 
-
-        button.disabled = true;
-
-
-        button.classList.add(
-            "running"
-        );
-
-
-        button.innerHTML =
-            "🟢 Live GPS Running";
-
-
-        /*
-            WATCH MOBILE GPS
-        */
-
-        activeWatch =
-            navigator.geolocation.watchPosition(
-
-                function(position) {
-
-                    const latitude =
-                        position.coords.latitude;
-
-
-                    const longitude =
-                        position.coords.longitude;
-
-
-                    status.innerHTML =
-                        "🟢 GPS Active<br>" +
-                        "📍 " +
-                        latitude.toFixed(6) +
-                        ", " +
-                        longitude.toFixed(6);
-
-
-                    /*
-                        SEND TO DJANGO
-                    */
-
-                    sendLocation(
-                        busId,
-                        latitude,
-                        longitude,
-                        status
-                    );
-
-                },
-
-
-                function(error) {
-
-                    button.disabled =
-                        false;
-
-
-                    button.classList.remove(
-                        "running"
-                    );
-
-
-                    button.innerHTML =
-                        "📍 Start Live GPS";
-
-
-                    if (
-                        error.code === 1
-                    ) {
-
-                        status.innerHTML =
-                            "🔴 Location permission denied.";
-
-                    }
-
-                    else if (
-                        error.code === 2
-                    ) {
-
-                        status.innerHTML =
-                            "🔴 Location unavailable.";
-
-                    }
-
-                    else if (
-                        error.code === 3
-                    ) {
-
-                        status.innerHTML =
-                            "🔴 GPS timeout.";
-
-                    }
-
-                    else {
-
-                        status.innerHTML =
-                            "🔴 GPS error.";
-
-                    }
-
-                },
-
-
-                {
-
-                    enableHighAccuracy:
-                        true,
-
-                    maximumAge:
-                        5000,
-
-                    timeout:
-                        10000
-
-                }
-
-            );
-
+        return;
     }
 
 
+    /* Stop any previous bus GPS */
+
+    if (activeWatch !== null) {
+
+        navigator.geolocation.clearWatch(
+            activeWatch
+        );
+
+        activeWatch = null;
+    }
+
+
+    activeBusId = busId;
+    activeBusNumber = busNumber;
+
+
+    status.innerHTML =
+        "🟡 Requesting GPS permission...";
+
+
+    button.disabled = true;
+
+    button.classList.add(
+        "running"
+    );
+
+    button.innerHTML =
+        "🟢 LIVE GPS RUNNING";
+
+
+    stopButton.style.display =
+        "block";
+
+
+    locationBox.style.display =
+        "block";
+
+
     /*
-        SEND LOCATION TO DJANGO
+       START PHONE GPS WATCH
     */
 
-    function sendLocation(
-        busId,
-        latitude,
-        longitude,
-        status
-    ) {
+    activeWatch =
+        navigator.geolocation.watchPosition(
 
-        const url =
-            `/api/bus/${busId}/location/update/`;
+            function(position) {
 
+                const latitude =
+                    position.coords.latitude;
 
-        const formData =
-            new URLSearchParams();
+                const longitude =
+                    position.coords.longitude;
 
-
-        formData.append(
-            "latitude",
-            latitude
-        );
+                const accuracy =
+                    position.coords.accuracy;
 
 
-        formData.append(
-            "longitude",
-            longitude
-        );
+                /*
+                   SHOW LOCATION
+                */
+
+                document.getElementById(
+                    "location" + busNumber
+                ).innerHTML =
+                    "Latitude: " +
+                    latitude.toFixed(6) +
+                    "<br>" +
+                    "Longitude: " +
+                    longitude.toFixed(6);
 
 
-        fetch(
-            url,
-            {
+                document.getElementById(
+                    "accuracy" + busNumber
+                ).innerText =
+                    "GPS accuracy: approximately " +
+                    Math.round(accuracy) +
+                    " metres";
 
-                method: "POST",
 
-                headers: {
+                status.innerHTML =
+                    "🟢 GPS ACTIVE<br>" +
+                    "📡 Sending live location to server...";
 
-                    "X-CSRFToken":
-                        csrfToken,
 
-                    "Content-Type":
-                        "application/x-www-form-urlencoded"
+                /*
+                   SEND TO DJANGO
+                */
 
-                },
+                sendLocation(
+                    busId,
+                    busNumber,
+                    latitude,
+                    longitude,
+                    status
+                );
 
-                body:
-                    formData.toString()
+            },
 
-            }
-        )
 
-        .then(
-            response =>
-                response.json()
-        )
+            function(error) {
 
-        .then(
-            data => {
+                button.disabled =
+                    false;
+
+                button.classList.remove(
+                    "running"
+                );
+
+                button.innerHTML =
+                    "📡 START LIVE GPS";
+
+                stopButton.style.display =
+                    "none";
+
 
                 if (
-                    data.success
+                    error.code === 1
                 ) {
 
                     status.innerHTML =
-                        "🟢 LIVE GPS ACTIVE<br>" +
-                        "📍 Location sent successfully";
+                        "🔴 Location permission denied.<br>" +
+                        "Please allow Location permission.";
+
+                }
+
+                else if (
+                    error.code === 2
+                ) {
+
+                    status.innerHTML =
+                        "🔴 Location unavailable.<br>" +
+                        "Turn ON phone GPS.";
+
+                }
+
+                else if (
+                    error.code === 3
+                ) {
+
+                    status.innerHTML =
+                        "🔴 GPS timeout.<br>" +
+                        "Please try again.";
 
                 }
 
                 else {
 
                     status.innerHTML =
-                        "🔴 Server GPS update failed";
+                        "🔴 GPS error.";
 
                 }
 
+            },
+
+
+            {
+                enableHighAccuracy: true,
+
+                maximumAge: 5000,
+
+                timeout: 15000
             }
-        )
 
-        .catch(
-            error => {
-
-                console.error(error);
-
-                status.innerHTML =
-                    "🔴 Unable to connect to server";
-
-            }
         );
 
+}
+
+
+/* ================================
+   SEND LOCATION TO DJANGO
+================================ */
+
+function sendLocation(
+    busId,
+    busNumber,
+    latitude,
+    longitude,
+    status
+) {
+
+    const url =
+        `/api/bus/${busId}/location/update/`;
+
+
+    const formData =
+        new URLSearchParams();
+
+
+    formData.append(
+        "latitude",
+        latitude
+    );
+
+    formData.append(
+        "longitude",
+        longitude
+    );
+
+
+    fetch(
+        url,
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "X-CSRFToken":
+                    csrfToken,
+
+                "Content-Type":
+                    "application/x-www-form-urlencoded"
+
+            },
+
+            body:
+                formData.toString()
+
+        }
+    )
+
+    .then(
+        response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Server returned " +
+                    response.status
+                );
+
+            }
+
+            return response.json();
+
+        }
+    )
+
+    .then(
+        data => {
+
+            if (
+                data.success
+            ) {
+
+                status.innerHTML =
+                    "🟢 LIVE GPS ACTIVE<br>" +
+                    "📡 Location sent to SmartBus";
+
+
+            } else {
+
+                status.innerHTML =
+                    "🔴 Server GPS update failed";
+
+            }
+
+        }
+    )
+
+    .catch(
+        error => {
+
+            console.error(
+                "GPS server error:",
+                error
+            );
+
+            status.innerHTML =
+                "🔴 Server connection failed<br>" +
+                "GPS is still running on phone.";
+
+        }
+    );
+
+}
+
+
+/* ================================
+   STOP GPS
+================================ */
+
+function stopGPS(
+    busNumber
+) {
+
+    const button =
+        document.getElementById(
+            "gpsButton" + busNumber
+        );
+
+    const stopButton =
+        document.getElementById(
+            "stopButton" + busNumber
+        );
+
+    const status =
+        document.getElementById(
+            "status" + busNumber
+        );
+
+
+    if (activeWatch !== null) {
+
+        navigator.geolocation.clearWatch(
+            activeWatch
+        );
+
+        activeWatch = null;
     }
+
+
+    activeBusId = null;
+    activeBusNumber = null;
+
+
+    button.disabled =
+        false;
+
+    button.classList.remove(
+        "running"
+    );
+
+    button.innerHTML =
+        "📡 START LIVE GPS";
+
+
+    stopButton.style.display =
+        "none";
+
+
+    status.innerHTML =
+        "🔴 GPS stopped";
+
+
+    /*
+       Important:
+       Student will no longer receive
+       fresh GPS updates after this point.
+    */
+
+}
 
 </script>
 
