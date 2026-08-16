@@ -1,16 +1,10 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>SmartBus - Live Tracking</title>
-
-    <!-- Leaflet Map -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
 
     <style>
         * {
@@ -172,7 +166,6 @@
         }
 
         @media (max-width: 500px) {
-
             body {
                 padding: 12px;
             }
@@ -201,7 +194,6 @@
 <div class="container">
 
     <header>
-
         <div class="brand">
             SMARTBUS • LIVE TRACKING
         </div>
@@ -213,14 +205,12 @@
         <a href="{% url 'home' %}" class="back">
             ← Back to Dashboard
         </a>
-
     </header>
 
 
     <div class="tracking-card">
 
         <div class="bus-title">
-
             <h2>
                 📍 Bus {{ bus.bus_number }}
             </h2>
@@ -228,12 +218,10 @@
             <div class="live">
                 ● LIVE
             </div>
-
         </div>
 
 
         <div class="info">
-
             <div class="label">
                 DEPARTURE
             </div>
@@ -241,12 +229,10 @@
             <div class="value">
                 ⏰ {{ bus.time }}
             </div>
-
         </div>
 
 
         <div class="info">
-
             <div class="label">
                 DESTINATION
             </div>
@@ -254,7 +240,6 @@
             <div class="value">
                 📍 {{ bus.destination }}
             </div>
-
         </div>
 
 
@@ -265,11 +250,10 @@
             </div>
 
             <div class="map-subtitle">
-                Live GPS location with street address
+                Live GPS location with Google Maps
             </div>
 
             <div id="map"></div>
-
 
             <button
                 id="gpsButton"
@@ -280,7 +264,6 @@
 
             </button>
 
-
             <div
                 id="locationStatus"
                 class="location-status">
@@ -288,7 +271,6 @@
                 🔵 GPS not started
 
             </div>
-
 
             <div
                 id="addressStatus"
@@ -310,113 +292,150 @@
 </div>
 
 
-<!-- Leaflet -->
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
-
-
 <script>
 
-    /*
-        BUS ID
-    */
-
     const busId = {{ bus.id }};
-
-
-    /*
-        DEFAULT LOCATION
-        Polur / Tiruvannamalai area
-    */
 
     const defaultLatitude = 12.5036;
     const defaultLongitude = 79.0608;
 
-
+    let map;
+    let busMarker;
     let gpsWatchId = null;
-
-    let lastAddressLatitude = null;
-    let lastAddressLongitude = null;
+    let geocoder;
 
 
     /*
-        MAP
+        GOOGLE MAP INITIALIZATION
     */
 
-    const map = L.map("map").setView(
-        [
+    function initMap() {
+
+        const defaultPosition = {
+            lat: defaultLatitude,
+            lng: defaultLongitude
+        };
+
+
+        map = new google.maps.Map(
+            document.getElementById("map"),
+            {
+                center: defaultPosition,
+                zoom: 14,
+
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true,
+
+                zoomControl: true
+            }
+        );
+
+
+        /*
+            BUS MARKER
+        */
+
+        busMarker =
+            new google.maps.Marker({
+
+                position: defaultPosition,
+
+                map: map,
+
+                title:
+                    "SmartBus {{ bus.bus_number }}",
+
+                label: {
+                    text: "🚌",
+                    fontSize: "24px"
+                }
+
+            });
+
+
+        /*
+            GOOGLE GEOCODER
+        */
+
+        geocoder =
+            new google.maps.Geocoder();
+
+
+        /*
+            INITIAL ADDRESS
+        */
+
+        getStreetAddress(
             defaultLatitude,
             defaultLongitude
-        ],
-        14
-    );
+        );
+
+
+        /*
+            GET CURRENT SERVER LOCATION
+        */
+
+        updateStudentLocation();
+
+    }
 
 
     /*
-        OPENSTREETMAP
+        STREET ADDRESS
     */
 
-    L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-            maxZoom: 19,
+    function getStreetAddress(
+        latitude,
+        longitude
+    ) {
 
-            attribution:
-                "&copy; OpenStreetMap contributors"
-        }
-    ).addTo(map);
-
-
-    /*
-        BUS ICON
-    */
-
-    const busIcon = L.divIcon({
-
-        className: "bus-marker",
-
-        html: `
-            <div style="
-                background:#2563eb;
-                color:white;
-                width:48px;
-                height:48px;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:25px;
-                border:3px solid white;
-                box-shadow:0 5px 18px rgba(0,0,0,.5);
-            ">
-                🚌
-            </div>
-        `,
-
-        iconSize: [48, 48],
-
-        iconAnchor: [24, 24]
-
-    });
+        const addressBox =
+            document.getElementById(
+                "addressStatus"
+            );
 
 
-    /*
-        BUS MARKER
-    */
-
-    let busMarker = L.marker(
-
-        [
-            defaultLatitude,
-            defaultLongitude
-        ],
-
-        {
-            icon: busIcon
+        if (!geocoder) {
+            return;
         }
 
-    ).addTo(map);
+
+        geocoder.geocode(
+
+            {
+                location: {
+                    lat: latitude,
+                    lng: longitude
+                }
+            },
+
+            function(results, status) {
+
+                if (
+                    status === "OK" &&
+                    results &&
+                    results.length > 0
+                ) {
+
+                    addressBox.innerHTML =
+                        "📍 " +
+                        results[0].formatted_address;
+
+                }
+
+                else {
+
+                    addressBox.innerHTML =
+                        "📍 Street address not available";
+
+                }
+
+            }
+
+        );
+
+    }
 
 
     /*
@@ -441,8 +460,7 @@
                 let cookie of cookies
             ) {
 
-                cookie =
-                    cookie.trim();
+                cookie = cookie.trim();
 
 
                 if (
@@ -459,7 +477,6 @@
                         );
 
                     break;
-
                 }
 
             }
@@ -477,191 +494,7 @@
 
 
     /*
-        STREET ADDRESS
-    */
-
-    function showAddress(
-        latitude,
-        longitude
-    ) {
-
-        const addressBox =
-            document.getElementById(
-                "addressStatus"
-            );
-
-
-        /*
-            Don't request same address
-            again and again
-        */
-
-        if (
-
-            lastAddressLatitude !== null &&
-
-            Math.abs(
-                lastAddressLatitude -
-                latitude
-            ) < 0.0001 &&
-
-            Math.abs(
-                lastAddressLongitude -
-                longitude
-            ) < 0.0001
-
-        ) {
-
-            return;
-
-        }
-
-
-        lastAddressLatitude =
-            latitude;
-
-
-        lastAddressLongitude =
-            longitude;
-
-
-        addressBox.innerHTML =
-            "📍 Finding street name...";
-
-
-        fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            {
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        )
-
-        .then(
-            response =>
-                response.json()
-        )
-
-        .then(
-            data => {
-
-                if (
-                    data &&
-                    data.address
-                ) {
-
-                    const address =
-                        data.address;
-
-
-                    const road =
-                        address.road ||
-                        address.pedestrian ||
-                        address.residential ||
-                        "";
-
-
-                    const area =
-                        address.suburb ||
-                        address.neighbourhood ||
-                        address.village ||
-                        address.town ||
-                        "";
-
-
-                    const city =
-                        address.city ||
-                        address.municipality ||
-                        address.district ||
-                        "";
-
-
-                    const state =
-                        address.state ||
-                        "";
-
-
-                    const parts = [];
-
-
-                    if (road)
-                        parts.push(road);
-
-
-                    if (area)
-                        parts.push(area);
-
-
-                    if (city)
-                        parts.push(city);
-
-
-                    if (state)
-                        parts.push(state);
-
-
-                    if (
-                        parts.length > 0
-                    ) {
-
-                        addressBox.innerHTML =
-                            "📍 " +
-                            parts.join(", ");
-
-                    }
-
-                    else if (
-                        data.display_name
-                    ) {
-
-                        addressBox.innerHTML =
-                            "📍 " +
-                            data.display_name;
-
-                    }
-
-                    else {
-
-                        addressBox.innerHTML =
-                            "📍 Address not available";
-
-                    }
-
-                }
-
-                else {
-
-                    addressBox.innerHTML =
-                        "📍 Street address not available";
-
-                }
-
-            }
-        )
-
-        .catch(
-            error => {
-
-                console.log(
-                    "Address error:",
-                    error
-                );
-
-
-                addressBox.innerHTML =
-                    "📍 Address temporarily unavailable";
-
-            }
-        );
-
-    }
-
-
-    /*
-        SEND DRIVER GPS
-        TO DJANGO
+        SEND GPS TO DJANGO
     */
 
     function sendLocation(
@@ -725,9 +558,7 @@
                     );
 
 
-                if (
-                    data.success
-                ) {
+                if (data.success) {
 
                     status.innerHTML =
                         "🟢 GPS Active • Location sent to server";
@@ -747,9 +578,7 @@
         .catch(
             error => {
 
-                console.error(
-                    error
-                );
+                console.error(error);
 
 
                 document.getElementById(
@@ -817,57 +646,53 @@
                         position.coords.longitude;
 
 
+                    const currentPosition = {
+
+                        lat: latitude,
+
+                        lng: longitude
+
+                    };
+
+
                     /*
-                        MOVE BUS
+                        MOVE BUS MARKER
                     */
 
-                    busMarker.setLatLng(
-
-                        [
-                            latitude,
-                            longitude
-                        ]
-
+                    busMarker.setPosition(
+                        currentPosition
                     );
 
 
                     /*
-                        MOVE MAP
+                        MOVE GOOGLE MAP
                     */
 
-                    map.setView(
-
-                        [
-                            latitude,
-                            longitude
-                        ],
-
-                        16
-
+                    map.setCenter(
+                        currentPosition
                     );
+
+
+                    map.setZoom(17);
 
 
                     /*
                         STREET ADDRESS
                     */
 
-                    showAddress(
-
+                    getStreetAddress(
                         latitude,
                         longitude
-
                     );
 
 
                     /*
-                        SEND TO DJANGO
+                        SEND LOCATION
                     */
 
                     sendLocation(
-
                         latitude,
                         longitude
-
                     );
 
                 },
@@ -957,13 +782,8 @@
             data => {
 
                 if (
-
-                    data.latitude !==
-                    undefined &&
-
-                    data.longitude !==
-                    undefined
-
+                    data.latitude !== undefined &&
+                    data.longitude !== undefined
                 ) {
 
                     const latitude =
@@ -979,28 +799,40 @@
 
 
                     if (
-
                         latitude !== 0 &&
-
                         longitude !== 0
-
                     ) {
 
-                        busMarker.setLatLng(
+                        const position = {
 
-                            [
-                                latitude,
-                                longitude
-                            ]
+                            lat: latitude,
 
-                        );
+                            lng: longitude
+
+                        };
 
 
-                        showAddress(
+                        if (busMarker) {
 
+                            busMarker.setPosition(
+                                position
+                            );
+
+                        }
+
+
+                        if (map) {
+
+                            map.setCenter(
+                                position
+                            );
+
+                        }
+
+
+                        getStreetAddress(
                             latitude,
                             longitude
-
                         );
 
                     }
@@ -1029,20 +861,23 @@
     */
 
     setInterval(
-
         updateStudentLocation,
-
         5000
-
     );
 
+</script>
 
-    /*
-        INITIAL LOCATION CHECK
-    */
 
-    updateStudentLocation();
+<!--
+    IMPORTANT:
+    Replace YOUR_API_KEY_HERE
+    with your Google Maps API key.
+-->
 
+<script
+    async
+    defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKusHQTBxHxsi-vqO-dCt5bdtUYezgspU&callback=initMap">
 </script>
 
 </body>
