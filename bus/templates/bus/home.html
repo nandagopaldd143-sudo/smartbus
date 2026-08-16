@@ -1,0 +1,386 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SmartBus Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #050b2e, #101d58, #071a3d);
+            color: white;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 7%;
+            background: rgba(0, 0, 0, 0.25);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+        }
+
+        .logout {
+            text-decoration: none;
+            color: white;
+            padding: 11px 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .logout:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .container {
+            width: 86%;
+            max-width: 1200px;
+            margin: 45px auto;
+        }
+
+        .welcome {
+            margin-bottom: 35px;
+        }
+
+        .welcome h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .welcome p {
+            color: #b8c5ff;
+            font-size: 17px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+            padding: 9px 15px;
+            border-radius: 20px;
+            background: rgba(54, 211, 153, 0.12);
+            color: #6fffc2;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 9px;
+            height: 9px;
+            background: #35e6a1;
+            border-radius: 50%;
+        }
+
+        .section-title {
+            font-size: 25px;
+            margin-bottom: 20px;
+        }
+
+        .bus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .bus-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 22px;
+            padding: 27px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+            transition: 0.3s;
+        }
+
+        .bus-card:hover {
+            transform: translateY(-7px);
+            border-color: rgba(95, 188, 255, 0.6);
+        }
+
+        .bus-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .bus-number {
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        .bus-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #36a9ff, #5f65ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .info {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            color: #8fa5d9;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .value {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .track-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            padding: 14px;
+            border-radius: 13px;
+            background: linear-gradient(90deg, #249cff, #5865ff);
+            margin-top: 25px;
+            transition: 0.3s;
+        }
+
+        .track-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(54, 155, 255, 0.35);
+        }
+
+        footer {
+            text-align: center;
+            padding: 35px;
+            color: #8293c4;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding: 18px 5%;
+            }
+
+            .container {
+                width: 90%;
+                margin: 35px auto;
+            }
+
+            .welcome h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+
+        <div class="logo">
+            <div class="logo-icon">🚌</div>
+            SmartBus
+        </div>
+
+        <a href="{% url 'logout' %}" class="logout">
+            Logout
+        </a>
+
+    </header>
+
+
+    <!-- Main Dashboard -->
+    <main class="container">
+
+        <section class="welcome">
+
+            <h1>Welcome Back 👋</h1>
+
+            <p>
+                Manage your college transportation and track buses easily.
+            </p>
+
+            <div class="status">
+                <span class="dot"></span>
+                Login Successful • System Online
+            </div>
+
+        </section>
+
+
+        <h2 class="section-title">Available Buses</h2>
+
+
+        <div class="bus-grid">
+
+            <!-- BUS 46 -->
+            <div class="bus-card">
+
+                <div class="bus-top">
+
+                    <div class="bus-number">
+                        Bus 46
+                    </div>
+
+                    <div class="bus-icon">
+                        🚌
+                    </div>
+
+                </div>
+
+
+                <div class="info">
+
+                    <div class="label">
+                        📍 BUS STOP
+                    </div>
+
+                    <div class="value">
+                        Polur Bus Stand
+                    </div>
+
+                </div>
+
+
+                <div class="info">
+
+                    <div class="label">
+                        DEPARTURE
+                    </div>
+
+                    <div class="value">
+                        7:50 AM
+                    </div>
+
+                </div>
+
+
+                <div class="info">
+
+                    <div class="label">
+                        DESTINATION
+                    </div>
+
+                    <div class="value">
+                        Shanmuga Industries Arts and Science College
+                    </div>
+
+                </div>
+
+
+                <!-- TRACK BUS 46 -->
+                <a href="{% url 'track_bus' 1 %}" class="track-btn">
+                    📍 Track This Bus
+                </a>
+
+            </div>
+
+
+            <!-- BUS 5 -->
+            <div class="bus-card">
+
+                <div class="bus-top">
+
+                    <div class="bus-number">
+                        Bus 5
+                    </div>
+
+                    <div class="bus-icon">
+                        🚌
+                    </div>
+
+                </div>
+
+
+                <div class="info">
+
+                    <div class="label">
+                        📍 BUS STOP
+                    </div>
+
+                    <div class="value">
+                        Anjaneyar Kovil, Polur
+                    </div>
+
+                </div>
+
+
+                <div class="info">
+
+                    <div class="label">
+                        DEPARTURE
+                    </div>
+
+                    <div class="value">
+                        7:50 AM
+                    </div>
+
+                </div>
+
+
+                <div class="info">
+
+                    <div class="label">
+                        DESTINATION
+                    </div>
+
+                    <div class="value">
+                        Shanmuga Industries Arts and Science College
+                    </div>
+
+                </div>
+
+
+                <!-- TRACK BUS 5 -->
+                <a href="{% url 'track_bus' 2 %}" class="track-btn">
+                    📍 Track This Bus
+                </a>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <footer>
+        © 2026 SmartBus • College Bus Tracking System
+    </footer>
+
+</body>
+</html>

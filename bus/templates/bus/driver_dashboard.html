@@ -1,0 +1,593 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SmartBus Driver Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(
+                    circle at top right,
+                    #164e63,
+                    transparent 35%
+                ),
+                linear-gradient(
+                    135deg,
+                    #020617,
+                    #0f172a,
+                    #111827
+                );
+
+            color: white;
+            padding: 18px;
+        }
+
+        .dashboard {
+            max-width: 650px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 10px 5px 22px;
+        }
+
+        .brand {
+            color: #38bdf8;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 30px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            margin-top: 7px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 22px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+        }
+
+        .bus-title {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .bus-number {
+            text-align: center;
+            font-size: 42px;
+            font-weight: bold;
+            margin: 8px 0 18px;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .info-box {
+            flex: 1;
+            background: rgba(255,255,255,0.06);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .label {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        .value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 12px #22c55e;
+        }
+
+        .gps-message {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        #map {
+            width: 100%;
+            height: 350px;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .location {
+            margin-top: 15px;
+            background: rgba(0,0,0,0.18);
+            padding: 14px;
+            border-radius: 14px;
+        }
+
+        .location p {
+            margin: 7px 0;
+            font-size: 14px;
+        }
+
+        .map-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            padding: 13px;
+            border-radius: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .back-btn:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 450px) {
+
+            body {
+                padding: 12px;
+            }
+
+            .info-row {
+                flex-direction: column;
+            }
+
+            #map {
+                height: 300px;
+            }
+
+            .bus-number {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- HEADER -->
+    <div class="header">
+
+        <div class="brand">
+            SMARTBUS • DRIVER
+        </div>
+
+        <h1>
+            🚌 Driver Dashboard
+        </h1>
+
+        <p>
+            Live bus location tracking
+        </p>
+
+    </div>
+
+
+    <!-- BUS DETAILS -->
+    <div class="card">
+
+        <div class="bus-title">
+            CURRENT BUS
+        </div>
+
+        <div class="bus-number">
+            BUS 46
+        </div>
+
+        <div class="info-row">
+
+            <div class="info-box">
+
+                <div class="label">
+                    DEPARTURE
+                </div>
+
+                <div class="value">
+                    7:50 AM
+                </div>
+
+            </div>
+
+
+            <div class="info-box">
+
+                <div class="label">
+                    NEXT STOP
+                </div>
+
+                <div class="value">
+                    Polur
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div style="margin-top:15px;">
+
+            <div class="label">
+                DESTINATION
+            </div>
+
+            <div class="value">
+                Shanmuga Industries Arts and Science College
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- GPS STATUS -->
+    <div class="card">
+
+        <div class="gps-status">
+
+            <span class="dot"></span>
+
+            <span>
+                GPS Status: <span id="gpsStatus">Waiting...</span>
+            </span>
+
+        </div>
+
+
+        <div class="location">
+
+            <p>
+                📍 Latitude:
+                <strong id="latitude">
+                    Waiting...
+                </strong>
+            </p>
+
+            <p>
+                📍 Longitude:
+                <strong id="longitude">
+                    Waiting...
+                </strong>
+            </p>
+
+        </div>
+
+
+        <p class="gps-message" id="gpsMessage">
+            📍 Requesting your device location...
+        </p>
+
+    </div>
+
+
+    <!-- MAP -->
+    <div class="card">
+
+        <div class="map-title">
+            🗺️ Live Bus Location
+        </div>
+
+        <div id="map"></div>
+
+    </div>
+
+
+    <a href="{% url 'home' %}" class="back-btn">
+        ← Back to Dashboard
+    </a>
+
+</div>
+
+
+<!-- Leaflet JS -->
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script>
+
+    /*
+       DEFAULT LOCATION
+       Used until device GPS is available.
+    */
+
+    const defaultLatitude = 12.5036;
+    const defaultLongitude = 79.0608;
+
+
+    /*
+       CREATE MAP
+    */
+
+    const map = L.map("map").setView(
+        [defaultLatitude, defaultLongitude],
+        14
+    );
+
+
+    /*
+       OPEN STREET MAP
+    */
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+
+            attribution:
+                "&copy; OpenStreetMap contributors"
+        }
+    ).addTo(map);
+
+
+    /*
+       BUS ICON
+    */
+
+    const busIcon = L.divIcon({
+
+        className: "bus-marker",
+
+        html: `
+            <div style="
+                background:#2563eb;
+                color:white;
+                width:46px;
+                height:46px;
+                border-radius:50%;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:24px;
+                border:3px solid white;
+                box-shadow:0 4px 15px rgba(0,0,0,.5);
+            ">
+                🚌
+            </div>
+        `,
+
+        iconSize: [46, 46],
+
+        iconAnchor: [23, 23]
+
+    });
+
+
+    /*
+       CREATE BUS MARKER
+    */
+
+    const busMarker = L.marker(
+        [defaultLatitude, defaultLongitude],
+        {
+            icon: busIcon
+        }
+    ).addTo(map);
+
+
+    /*
+       POPUP
+    */
+
+    busMarker.bindPopup(`
+
+        <div style="text-align:center;">
+
+            <strong>🚌 SMARTBUS</strong>
+
+            <br><br>
+
+            <strong>BUS 46</strong>
+
+            <br>
+
+            🟢 GPS Tracking Active
+
+        </div>
+
+    `);
+
+
+    /*
+       GPS ELEMENTS
+    */
+
+    const latitudeElement =
+        document.getElementById("latitude");
+
+    const longitudeElement =
+        document.getElementById("longitude");
+
+    const gpsStatusElement =
+        document.getElementById("gpsStatus");
+
+    const gpsMessageElement =
+        document.getElementById("gpsMessage");
+
+
+    /*
+       GET REAL DEVICE GPS
+    */
+
+    if ("geolocation" in navigator) {
+
+        navigator.geolocation.watchPosition(
+
+            function(position) {
+
+                const latitude =
+                    position.coords.latitude;
+
+                const longitude =
+                    position.coords.longitude;
+
+
+                /*
+                   UPDATE COORDINATES
+                */
+
+                latitudeElement.innerText =
+                    latitude.toFixed(6);
+
+                longitudeElement.innerText =
+                    longitude.toFixed(6);
+
+
+                /*
+                   UPDATE GPS STATUS
+                */
+
+                gpsStatusElement.innerText =
+                    "Active";
+
+
+                gpsMessageElement.innerText =
+                    "🟢 Your device GPS is active. Bus location is updating.";
+
+
+                /*
+                   MOVE BUS MARKER
+                */
+
+                busMarker.setLatLng([
+                    latitude,
+                    longitude
+                ]);
+
+
+                /*
+                   MOVE MAP
+                */
+
+                map.setView(
+                    [latitude, longitude],
+                    16
+                );
+
+
+                /*
+                   UPDATE POPUP
+                */
+
+                busMarker.bindPopup(`
+
+                    <div style="text-align:center;">
+
+                        <strong>🚌 SMARTBUS</strong>
+
+                        <br><br>
+
+                        <strong>BUS 46</strong>
+
+                        <br>
+
+                        🟢 GPS Active
+
+                        <br>
+
+                        📍 ${latitude.toFixed(6)}
+
+                        <br>
+
+                        📍 ${longitude.toFixed(6)}
+
+                    </div>
+
+                `);
+
+            },
+
+
+            function(error) {
+
+                gpsStatusElement.innerText =
+                    "Permission Required";
+
+                gpsMessageElement.innerText =
+                    "⚠️ Please allow location permission in Chrome to use live GPS.";
+
+                console.log(
+                    "GPS Error:",
+                    error.message
+                );
+
+            },
+
+
+            {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 10000
+            }
+
+        );
+
+    } else {
+
+        gpsStatusElement.innerText =
+            "Not Supported";
+
+        gpsMessageElement.innerText =
+            "❌ This browser/device does not support GPS.";
+
+    }
+
+</script>
+
+</body>
+</html>
