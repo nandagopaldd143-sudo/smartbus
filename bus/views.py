@@ -2,14 +2,21 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Bus
 
 
+# -------------------------------
+# LOGIN
+# -------------------------------
+
 def login_view(request):
+
     if request.user.is_authenticated:
         return redirect("home")
 
     if request.method == "POST":
+
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
 
@@ -20,7 +27,9 @@ def login_view(request):
         )
 
         if user is not None:
+
             login(request, user)
+
             return redirect("home")
 
         return render(
@@ -31,15 +40,29 @@ def login_view(request):
             }
         )
 
-    return render(request, "bus/login.html")
+    return render(
+        request,
+        "bus/login.html"
+    )
 
+
+# -------------------------------
+# LOGOUT
+# -------------------------------
 
 def logout_view(request):
+
     logout(request)
+
     return redirect("login")
 
 
+# -------------------------------
+# HOME
+# -------------------------------
+
 def home(request):
+
     if not request.user.is_authenticated:
         return redirect("login")
 
@@ -54,7 +77,12 @@ def home(request):
     )
 
 
+# -------------------------------
+# TRACK BUS
+# -------------------------------
+
 def track_bus(request, bus_id):
+
     if not request.user.is_authenticated:
         return redirect("login")
 
@@ -69,10 +97,13 @@ def track_bus(request, bus_id):
     )
 
 
+# -------------------------------
 # DRIVER DASHBOARD
+# NO LOGIN REQUIRED
+# -------------------------------
+
+@ensure_csrf_cookie
 def driver_dashboard(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
 
     return render(
         request,
@@ -80,8 +111,13 @@ def driver_dashboard(request):
     )
 
 
+# -------------------------------
 # STUDENT DASHBOARD
+# LOGIN REQUIRED
+# -------------------------------
+
 def student_dashboard(request):
+
     if not request.user.is_authenticated:
         return redirect("login")
 
@@ -98,25 +134,27 @@ def student_dashboard(request):
 
 # -------------------------------
 # LIVE GPS API
+# DRIVER LOGIN NOT REQUIRED
 # -------------------------------
 
 @require_POST
 def update_bus_location(request, bus_id):
 
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"error": "Login required"},
-            status=401
-        )
-
     try:
+
         bus = Bus.objects.get(id=bus_id)
 
-        latitude = float(request.POST.get("latitude"))
-        longitude = float(request.POST.get("longitude"))
+        latitude = float(
+            request.POST.get("latitude")
+        )
+
+        longitude = float(
+            request.POST.get("longitude")
+        )
 
         bus.latitude = latitude
         bus.longitude = longitude
+
         bus.save(
             update_fields=[
                 "latitude",
@@ -125,51 +163,71 @@ def update_bus_location(request, bus_id):
         )
 
         return JsonResponse({
+
             "success": True,
+
             "bus": bus.bus_number,
+
             "latitude": bus.latitude,
+
             "longitude": bus.longitude
+
         })
 
     except Bus.DoesNotExist:
 
         return JsonResponse(
-            {"error": "Bus not found"},
+            {
+                "error": "Bus not found"
+            },
             status=404
         )
 
     except (TypeError, ValueError):
 
         return JsonResponse(
-            {"error": "Invalid GPS coordinates"},
+            {
+                "error": "Invalid GPS coordinates"
+            },
             status=400
         )
 
 
 # -------------------------------
 # GET CURRENT BUS LOCATION
+# STUDENT LOGIN REQUIRED
 # -------------------------------
 
 def get_bus_location(request, bus_id):
 
     if not request.user.is_authenticated:
+
         return JsonResponse(
-            {"error": "Login required"},
+            {
+                "error": "Login required"
+            },
             status=401
         )
 
     try:
+
         bus = Bus.objects.get(id=bus_id)
 
         return JsonResponse({
+
             "bus": bus.bus_number,
+
             "latitude": bus.latitude,
+
             "longitude": bus.longitude
+
         })
 
     except Bus.DoesNotExist:
 
         return JsonResponse(
-            {"error": "Bus not found"},
+            {
+                "error": "Bus not found"
+            },
             status=404
         )
