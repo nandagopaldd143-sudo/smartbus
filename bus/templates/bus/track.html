@@ -152,6 +152,18 @@
             font-size: 13px;
         }
 
+        .address-status {
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 14px;
+            background: rgba(34,197,94,0.10);
+            border: 1px solid rgba(74,222,128,0.20);
+            color: #e2e8f0;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         footer {
             text-align: center;
             color: #64748b;
@@ -253,7 +265,7 @@
             </div>
 
             <div class="map-subtitle">
-                Driver GPS location updates automatically
+                Live GPS location with street address
             </div>
 
             <div id="map"></div>
@@ -274,6 +286,15 @@
                 class="location-status">
 
                 🔵 GPS not started
+
+            </div>
+
+
+            <div
+                id="addressStatus"
+                class="address-status">
+
+                📍 Street address will appear here
 
             </div>
 
@@ -302,6 +323,9 @@
     const defaultLongitude = 79.0608;
 
     let gpsWatchId = null;
+
+    let lastAddressLatitude = null;
+    let lastAddressLongitude = null;
 
 
     /*
@@ -364,17 +388,6 @@
     ).addTo(map);
 
 
-    busMarker.bindPopup(`
-        <div style="text-align:center;">
-            <strong>🚌 SMARTBUS</strong>
-            <br><br>
-            <strong>BUS {{ bus.bus_number }}</strong>
-            <br>
-            🟢 GPS Active
-        </div>
-    `);
-
-
     /*
         CSRF TOKEN
     */
@@ -416,21 +429,182 @@
 
 
     /*
+        SHOW STREET / ADDRESS
+    */
+
+    function showAddress(latitude, longitude) {
+
+        const addressBox =
+            document.getElementById(
+                "addressStatus"
+            );
+
+
+        /*
+            Avoid requesting the same
+            address repeatedly
+        */
+
+        if (
+            lastAddressLatitude !== null &&
+            Math.abs(
+                lastAddressLatitude - latitude
+            ) < 0.0001 &&
+            Math.abs(
+                lastAddressLongitude - longitude
+            ) < 0.0001
+        ) {
+            return;
+        }
+
+
+        lastAddressLatitude = latitude;
+        lastAddressLongitude = longitude;
+
+
+        addressBox.innerHTML =
+            "📍 Finding street name...";
+
+
+        fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+                headers: {
+                    "Accept":
+                        "application/json"
+                }
+            }
+        )
+
+        .then(response =>
+            response.json()
+        )
+
+        .then(data => {
+
+            if (
+                data &&
+                data.address
+            ) {
+
+                const address =
+                    data.address;
+
+
+                const road =
+                    address.road ||
+                    address.pedestrian ||
+                    address.residential ||
+                    "";
+
+
+                const area =
+                    address.suburb ||
+                    address.neighbourhood ||
+                    address.village ||
+                    address.town ||
+                    "";
+
+
+                const city =
+                    address.city ||
+                    address.municipality ||
+                    address.district ||
+                    "";
+
+
+                const state =
+                    address.state ||
+                    "";
+
+
+                let parts = [];
+
+
+                if (road)
+                    parts.push(road);
+
+                if (area)
+                    parts.push(area);
+
+                if (city)
+                    parts.push(city);
+
+                if (state)
+                    parts.push(state);
+
+
+                if (parts.length > 0) {
+
+                    addressBox.innerHTML =
+                        "📍 " +
+                        parts.join(", ");
+
+                }
+
+                else if (data.display_name) {
+
+                    addressBox.innerHTML =
+                        "📍 " +
+                        data.display_name;
+
+                }
+
+                else {
+
+                    addressBox.innerHTML =
+                        "📍 Address not available";
+
+                }
+
+            }
+
+            else {
+
+                addressBox.innerHTML =
+                    "📍 Street address not available";
+
+            }
+
+        })
+
+        .catch(error => {
+
+            console.log(
+                "Address error:",
+                error
+            );
+
+            addressBox.innerHTML =
+                "📍 Address temporarily unavailable";
+
+        });
+
+    }
+
+
+    /*
         SEND DRIVER GPS TO DJANGO
     */
 
-    function sendLocation(latitude, longitude) {
+    function sendLocation(
+        latitude,
+        longitude
+    ) {
 
         const url =
             `/api/bus/${busId}/location/update/`;
 
 
-        const formData = new URLSearchParams();
+        const formData =
+            new URLSearchParams();
+
 
         formData.append(
             "latitude",
             latitude
         );
+
 
         formData.append(
             "longitude",
@@ -443,16 +617,23 @@
             method: "POST",
 
             headers: {
-                "X-CSRFToken": csrfToken,
+
+                "X-CSRFToken":
+                    csrfToken,
+
                 "Content-Type":
                     "application/x-www-form-urlencoded"
+
             },
 
-            body: formData.toString()
+            body:
+                formData.toString()
 
         })
 
-        .then(response => response.json())
+        .then(response =>
+            response.json()
+        )
 
         .then(data => {
 
@@ -463,7 +644,9 @@
                 ).innerHTML =
                     "🟢 GPS Active • Location sent to server";
 
-            } else {
+            }
+
+            else {
 
                 document.getElementById(
                     "locationStatus"
@@ -499,6 +682,7 @@
                 "locationStatus"
             );
 
+
         const button =
             document.getElementById(
                 "gpsButton"
@@ -520,6 +704,7 @@
 
         button.disabled = true;
 
+
         button.innerHTML =
             "🟢 Live GPS Running";
 
@@ -532,12 +717,13 @@
                     const latitude =
                         position.coords.latitude;
 
+
                     const longitude =
                         position.coords.longitude;
 
 
                     /*
-                        Move marker
+                        Move bus marker
                     */
 
                     busMarker.setLatLng([
@@ -557,7 +743,17 @@
 
 
                     /*
-                        Update popup
+                        Update street address
+                    */
+
+                    showAddress(
+                        latitude,
+                        longitude
+                    );
+
+
+                    /*
+                        Popup
                     */
 
                     busMarker.bindPopup(`
@@ -591,6 +787,7 @@
                 function(error) {
 
                     button.disabled = false;
+
 
                     button.innerHTML =
                         "📍 Start Live GPS";
@@ -640,7 +837,6 @@
 
     /*
         GET LATEST BUS LOCATION
-        FOR STUDENT TRACKING
     */
 
     function updateStudentLocation() {
@@ -661,15 +857,16 @@
             ) {
 
                 const latitude =
-                    parseFloat(data.latitude);
+                    parseFloat(
+                        data.latitude
+                    );
+
 
                 const longitude =
-                    parseFloat(data.longitude);
+                    parseFloat(
+                        data.longitude
+                    );
 
-
-                /*
-                    Ignore default 0,0
-                */
 
                 if (
                     latitude !== 0 &&
@@ -681,6 +878,17 @@
                         longitude
                     ]);
 
+
+                    /*
+                        Get street address
+                        for latest location
+                    */
+
+                    showAddress(
+                        latitude,
+                        longitude
+                    );
+
                 }
 
             }
@@ -688,18 +896,19 @@
         })
 
         .catch(error => {
+
             console.log(
                 "Location fetch error:",
                 error
             );
+
         });
 
     }
 
 
     /*
-        UPDATE STUDENT MAP
-        EVERY 5 SECONDS
+        UPDATE EVERY 5 SECONDS
     */
 
     setInterval(
