@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>SmartBus - Track Bus</title>
+    <title>SmartBus - Live Tracking</title>
 
-    <!-- Leaflet Map CSS -->
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -23,18 +22,8 @@
         body {
             min-height: 100vh;
             background:
-                radial-gradient(
-                    circle at top right,
-                    #164e63,
-                    transparent 35%
-                ),
-                linear-gradient(
-                    135deg,
-                    #020617,
-                    #0f172a,
-                    #111827
-                );
-
+                radial-gradient(circle at top right, #164e63, transparent 35%),
+                linear-gradient(135deg, #020617, #0f172a, #111827);
             color: white;
             padding: 18px;
         }
@@ -139,6 +128,23 @@
             overflow: hidden;
         }
 
+        .gps-button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            background: #0ea5e9;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .gps-button:hover {
+            background: #0284c7;
+        }
+
         .location-status {
             margin-top: 14px;
             padding: 13px;
@@ -157,7 +163,6 @@
         }
 
         @media (max-width: 500px) {
-
             body {
                 padding: 12px;
             }
@@ -186,7 +191,6 @@
 <div class="container">
 
     <header>
-
         <div class="brand">
             SMARTBUS • LIVE TRACKING
         </div>
@@ -198,14 +202,12 @@
         <a href="{% url 'home' %}" class="back">
             ← Back to Dashboard
         </a>
-
     </header>
 
 
     <div class="tracking-card">
 
         <div class="bus-title">
-
             <h2>
                 📍 Bus {{ bus.bus_number }}
             </h2>
@@ -213,12 +215,10 @@
             <div class="live">
                 ● LIVE
             </div>
-
         </div>
 
 
         <div class="info">
-
             <div class="label">
                 DEPARTURE
             </div>
@@ -226,12 +226,10 @@
             <div class="value">
                 ⏰ {{ bus.time }}
             </div>
-
         </div>
 
 
         <div class="info">
-
             <div class="label">
                 DESTINATION
             </div>
@@ -239,7 +237,6 @@
             <div class="value">
                 📍 {{ bus.destination }}
             </div>
-
         </div>
 
 
@@ -250,13 +247,21 @@
             </div>
 
             <div class="map-subtitle">
-                Live location of your college bus
+                GPS location updates automatically
             </div>
 
             <div id="map"></div>
 
-            <div class="location-status">
-                🟢 GPS Active • Bus location available
+            <button
+                class="gps-button"
+                onclick="startGPS()">
+                📍 Start Live GPS
+            </button>
+
+            <div
+                class="location-status"
+                id="locationStatus">
+                🔵 GPS not started
             </div>
 
         </div>
@@ -271,7 +276,6 @@
 </div>
 
 
-<!-- Leaflet Map JavaScript -->
 <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
 </script>
@@ -280,17 +284,17 @@
 <script>
 
     /*
-        BUS LOCATION
+        Default location:
         Polur Bus Stand
     */
 
-    const busLatitude = 12.5036;
-    const busLongitude = 79.0608;
+    const defaultLatitude = 12.5036;
+    const defaultLongitude = 79.0608;
 
 
     // Create map
     const map = L.map("map").setView(
-        [busLatitude, busLongitude],
+        [defaultLatitude, defaultLongitude],
         14
     );
 
@@ -331,53 +335,148 @@
         `,
 
         iconSize: [48, 48],
-
         iconAnchor: [24, 24]
-
     });
 
 
-    // Add bus marker
-    const busMarker = L.marker(
-        [busLatitude, busLongitude],
+    // Initial bus marker
+    let busMarker = L.marker(
+        [defaultLatitude, defaultLongitude],
         {
             icon: busIcon
         }
     ).addTo(map);
 
 
-    // Popup
     busMarker.bindPopup(`
-
         <div style="text-align:center;">
-
             <strong>🚌 SMARTBUS</strong>
-
             <br><br>
-
             <strong>BUS {{ bus.bus_number }}</strong>
-
             <br>
-
-            🟢 GPS Active
-
-            <br>
-
-            📍 Polur Bus Stand
-
-            <br>
-
-            ⏰ {{ bus.time }}
-
+            🟢 GPS Ready
         </div>
-
     `);
 
 
-    // Open popup automatically
-    busMarker.openPopup();
+    /*
+        START LIVE GPS
+    */
+
+    function startGPS() {
+
+        const status =
+            document.getElementById("locationStatus");
+
+
+        if (!navigator.geolocation) {
+
+            status.innerHTML =
+                "🔴 GPS is not supported by this browser.";
+
+            return;
+        }
+
+
+        status.innerHTML =
+            "🟡 Requesting GPS permission...";
+
+
+        navigator.geolocation.watchPosition(
+
+            function(position) {
+
+                const latitude =
+                    position.coords.latitude;
+
+                const longitude =
+                    position.coords.longitude;
+
+
+                /*
+                    Move bus marker
+                */
+
+                busMarker.setLatLng([
+                    latitude,
+                    longitude
+                ]);
+
+
+                /*
+                    Move map
+                */
+
+                map.setView(
+                    [latitude, longitude],
+                    16
+                );
+
+
+                /*
+                    Update popup
+                */
+
+                busMarker.bindPopup(`
+                    <div style="text-align:center;">
+                        <strong>🚌 SMARTBUS</strong>
+                        <br><br>
+                        <strong>BUS {{ bus.bus_number }}</strong>
+                        <br>
+                        🟢 GPS ACTIVE
+                        <br><br>
+                        📍 ${latitude.toFixed(6)},
+                        ${longitude.toFixed(6)}
+                    </div>
+                `);
+
+
+                /*
+                    Status
+                */
+
+                status.innerHTML =
+                    "🟢 GPS Active • Location updating live";
+
+            },
+
+            function(error) {
+
+                if (error.code === 1) {
+
+                    status.innerHTML =
+                        "🔴 GPS permission denied. Allow location access.";
+
+                } else if (error.code === 2) {
+
+                    status.innerHTML =
+                        "🔴 GPS location unavailable.";
+
+                } else if (error.code === 3) {
+
+                    status.innerHTML =
+                        "🔴 GPS request timed out.";
+
+                } else {
+
+                    status.innerHTML =
+                        "🔴 Unable to get GPS location.";
+
+                }
+
+            },
+
+            {
+                enableHighAccuracy: true,
+                maximumAge: 5000,
+                timeout: 10000
+            }
+
+        );
+
+    }
 
 </script>
 
 </body>
-</html>
+</html>   

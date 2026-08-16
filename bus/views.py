@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from .models import Bus
 
 
@@ -92,3 +94,82 @@ def student_dashboard(request):
             "buses": buses
         }
     )
+
+
+# -------------------------------
+# LIVE GPS API
+# -------------------------------
+
+@require_POST
+def update_bus_location(request, bus_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Login required"},
+            status=401
+        )
+
+    try:
+        bus = Bus.objects.get(id=bus_id)
+
+        latitude = float(request.POST.get("latitude"))
+        longitude = float(request.POST.get("longitude"))
+
+        bus.latitude = latitude
+        bus.longitude = longitude
+        bus.save(
+            update_fields=[
+                "latitude",
+                "longitude"
+            ]
+        )
+
+        return JsonResponse({
+            "success": True,
+            "bus": bus.bus_number,
+            "latitude": bus.latitude,
+            "longitude": bus.longitude
+        })
+
+    except Bus.DoesNotExist:
+
+        return JsonResponse(
+            {"error": "Bus not found"},
+            status=404
+        )
+
+    except (TypeError, ValueError):
+
+        return JsonResponse(
+            {"error": "Invalid GPS coordinates"},
+            status=400
+        )
+
+
+# -------------------------------
+# GET CURRENT BUS LOCATION
+# -------------------------------
+
+def get_bus_location(request, bus_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Login required"},
+            status=401
+        )
+
+    try:
+        bus = Bus.objects.get(id=bus_id)
+
+        return JsonResponse({
+            "bus": bus.bus_number,
+            "latitude": bus.latitude,
+            "longitude": bus.longitude
+        })
+
+    except Bus.DoesNotExist:
+
+        return JsonResponse(
+            {"error": "Bus not found"},
+            status=404
+        )

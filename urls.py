@@ -18,4 +18,17 @@ urlpatterns = [
 
     # Bus Tracking
     path("track/<int:bus_id>/", views.track_bus, name="track_bus"),
+
+    path(
+    "api/bus/<int:bus_id>/location/update/",
+    views.update_bus_location,
+    name="update_bus_location"
+),
+
+path(
+    "api/bus/<int:bus_id>/location/",
+    views.get_bus_location,
+    name="get_bus_location"
+),
+
 ]
