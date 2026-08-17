@@ -54,11 +54,6 @@
             padding: 11px 20px;
             border: 1px solid rgba(255,255,255,0.3);
             border-radius: 12px;
-            transition: 0.3s;
-        }
-
-        .logout:hover {
-            background: rgba(255,255,255,0.15);
         }
 
         .container {
@@ -118,12 +113,6 @@
             padding: 27px;
             backdrop-filter: blur(15px);
             box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-            transition: 0.3s;
-        }
-
-        .bus-card:hover {
-            transform: translateY(-7px);
-            border-color: rgba(95, 188, 255, 0.6);
         }
 
         .bus-top {
@@ -175,12 +164,6 @@
             border-radius: 13px;
             background: linear-gradient(90deg, #249cff, #5865ff);
             margin-top: 25px;
-            transition: 0.3s;
-        }
-
-        .track-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 25px rgba(54, 155, 255, 0.35);
         }
 
         footer {
@@ -191,6 +174,7 @@
         }
 
         @media (max-width: 600px) {
+
             .header {
                 padding: 18px 5%;
             }
@@ -209,178 +193,187 @@
 
 <body>
 
-    <!-- Header -->
-    <header class="header">
+<header class="header">
 
-        <div class="logo">
-            <div class="logo-icon">🚌</div>
-            SmartBus
+    <div class="logo">
+        <div class="logo-icon">🚌</div>
+        SmartBus
+    </div>
+
+    <a href="{% url 'logout' %}" class="logout">
+        Logout
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <section class="welcome">
+
+        <h1>Welcome Back 👋</h1>
+
+        <p>
+            Manage your college transportation and track buses easily.
+        </p>
+
+        <div class="status">
+            <span class="dot"></span>
+            Login Successful • System Online
         </div>
 
-        <a href="{% url 'logout' %}" class="logout">
-            Logout
-        </a>
-
-    </header>
+    </section>
 
 
-    <!-- Main Dashboard -->
-    <main class="container">
-
-        <section class="welcome">
-
-            <h1>Welcome Back 👋</h1>
-
-            <p>
-                Manage your college transportation and track buses easily.
-            </p>
-
-            <div class="status">
-                <span class="dot"></span>
-                Login Successful • System Online
-            </div>
-
-        </section>
+    <h2 class="section-title">
+        Available Buses
+    </h2>
 
 
-        <h2 class="section-title">Available Buses</h2>
+    <div class="bus-grid">
 
 
-        <div class="bus-grid">
+        <!-- BUS 46 -->
 
-            <!-- BUS 46 -->
-            <div class="bus-card">
+        <div class="bus-card">
 
-                <div class="bus-top">
+            <div class="bus-top">
 
-                    <div class="bus-number">
-                        Bus 46
-                    </div>
-
-                    <div class="bus-icon">
-                        🚌
-                    </div>
-
+                <div class="bus-number">
+                    Bus 46
                 </div>
 
-
-                <div class="info">
-
-                    <div class="label">
-                        📍 BUS STOP
-                    </div>
-
-                    <div class="value">
-                        Polur Bus Stand
-                    </div>
-
+                <div class="bus-icon">
+                    🚌
                 </div>
-
-
-                <div class="info">
-
-                    <div class="label">
-                        DEPARTURE
-                    </div>
-
-                    <div class="value">
-                        7:50 AM
-                    </div>
-
-                </div>
-
-
-                <div class="info">
-
-                    <div class="label">
-                        DESTINATION
-                    </div>
-
-                    <div class="value">
-                        Shanmuga Industries Arts and Science College
-                    </div>
-
-                </div>
-
-
-                <!-- TRACK BUS 46 -->
-                <a href="{% url 'track_bus' 1 %}" class="track-btn">
-                    📍 Track This Bus
-                </a>
 
             </div>
 
 
-            <!-- BUS 5 -->
-            <div class="bus-card">
+            <div class="info">
 
-                <div class="bus-top">
-
-                    <div class="bus-number">
-                        Bus 5
-                    </div>
-
-                    <div class="bus-icon">
-                        🚌
-                    </div>
-
+                <div class="label">
+                    📍 BUS STOP
                 </div>
 
-
-                <div class="info">
-
-                    <div class="label">
-                        📍 BUS STOP
-                    </div>
-
-                    <div class="value">
-                        Anjaneyar Kovil, Polur
-                    </div>
-
+                <div class="value">
+                    Polur Bus Stand
                 </div>
-
-
-                <div class="info">
-
-                    <div class="label">
-                        DEPARTURE
-                    </div>
-
-                    <div class="value">
-                        7:50 AM
-                    </div>
-
-                </div>
-
-
-                <div class="info">
-
-                    <div class="label">
-                        DESTINATION
-                    </div>
-
-                    <div class="value">
-                        Shanmuga Industries Arts and Science College
-                    </div>
-
-                </div>
-
-
-                <!-- TRACK BUS 5 -->
-                <a href="{% url 'track_bus' 2 %}" class="track-btn">
-                    📍 Track This Bus
-                </a>
 
             </div>
+
+
+            <div class="info">
+
+                <div class="label">
+                    DEPARTURE
+                </div>
+
+                <div class="value">
+                    7:50 AM
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="label">
+                    DESTINATION
+                </div>
+
+                <div class="value">
+                    Shanmuga Industries Arts and Science College
+                </div>
+
+            </div>
+
+
+            <a href="{% url 'track_bus' bus46.id %}"
+               class="track-btn">
+
+                📍 Track This Bus
+
+            </a>
 
         </div>
 
-    </main>
 
 
-    <footer>
-        © 2026 SmartBus • College Bus Tracking System
-    </footer>
+        <!-- BUS 5 -->
+
+        <div class="bus-card">
+
+            <div class="bus-top">
+
+                <div class="bus-number">
+                    Bus 5
+                </div>
+
+                <div class="bus-icon">
+                    🚌
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="label">
+                    📍 BUS STOP
+                </div>
+
+                <div class="value">
+                    Anjaneyar Kovil, Polur
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="label">
+                    DEPARTURE
+                </div>
+
+                <div class="value">
+                    7:50 AM
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="label">
+                    DESTINATION
+                </div>
+
+                <div class="value">
+                    Shanmuga Industries Arts and Science College
+                </div>
+
+            </div>
+
+
+            <a href="{% url 'track_bus' bus5.id %}"
+               class="track-btn">
+
+                📍 Track This Bus
+
+            </a>
+
+        </div>
+
+
+    </div>
+
+</main>
+
+
+<footer>
+    © 2026 SmartBus • College Bus Tracking System
+</footer>
 
 </body>
 </html>

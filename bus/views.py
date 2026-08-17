@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -27,9 +27,7 @@ def login_view(request):
         )
 
         if user is not None:
-
             login(request, user)
-
             return redirect("home")
 
         return render(
@@ -40,10 +38,7 @@ def login_view(request):
             }
         )
 
-    return render(
-        request,
-        "bus/login.html"
-    )
+    return render(request, "bus/login.html")
 
 
 # -------------------------------
@@ -66,26 +61,36 @@ def home(request):
     if not request.user.is_authenticated:
         return redirect("login")
 
-    # Create a default bus if no bus exists
-    bus, created = Bus.objects.get_or_create(
-        id=1,
+    # Bus 46
+    bus46, created = Bus.objects.get_or_create(
+        bus_number="46",
         defaults={
-            "bus_number": "BUS001",
-            "time": "08:00",
-            "destination": "College",
+            "time": "07:50",
+            "destination": "Shanmuga Industries Arts and Science College",
             "latitude": 0,
             "longitude": 0,
             "gps_active": False,
         }
     )
 
-    buses = Bus.objects.all()
+    # Bus 5
+    bus5, created = Bus.objects.get_or_create(
+        bus_number="5",
+        defaults={
+            "time": "07:50",
+            "destination": "Shanmuga Industries Arts and Science College",
+            "latitude": 0,
+            "longitude": 0,
+            "gps_active": False,
+        }
+    )
 
     return render(
         request,
         "bus/home.html",
         {
-            "buses": buses
+            "bus46": bus46,
+            "bus5": bus5,
         }
     )
 
@@ -99,7 +104,7 @@ def track_bus(request, bus_id):
     if not request.user.is_authenticated:
         return redirect("login")
 
-    bus = Bus.objects.get(id=bus_id)
+    bus = get_object_or_404(Bus, id=bus_id)
 
     return render(
         request,
@@ -112,7 +117,6 @@ def track_bus(request, bus_id):
 
 # -------------------------------
 # DRIVER DASHBOARD
-# NO LOGIN REQUIRED
 # -------------------------------
 
 @ensure_csrf_cookie
@@ -126,7 +130,6 @@ def driver_dashboard(request):
 
 # -------------------------------
 # STUDENT DASHBOARD
-# LOGIN REQUIRED
 # -------------------------------
 
 def student_dashboard(request):
@@ -146,8 +149,7 @@ def student_dashboard(request):
 
 
 # -------------------------------
-# LIVE GPS API
-# DRIVER LOGIN NOT REQUIRED
+# LIVE GPS UPDATE
 # -------------------------------
 
 @require_POST
@@ -167,48 +169,41 @@ def update_bus_location(request, bus_id):
 
         bus.latitude = latitude
         bus.longitude = longitude
+        bus.gps_active = True
 
         bus.save(
             update_fields=[
                 "latitude",
-                "longitude"
+                "longitude",
+                "gps_active"
             ]
         )
 
         return JsonResponse({
-
             "success": True,
-
             "bus": bus.bus_number,
-
             "latitude": bus.latitude,
-
-            "longitude": bus.longitude
-
+            "longitude": bus.longitude,
+            "gps_active": bus.gps_active
         })
 
     except Bus.DoesNotExist:
 
         return JsonResponse(
-            {
-                "error": "Bus not found"
-            },
+            {"error": "Bus not found"},
             status=404
         )
 
     except (TypeError, ValueError):
 
         return JsonResponse(
-            {
-                "error": "Invalid GPS coordinates"
-            },
+            {"error": "Invalid GPS coordinates"},
             status=400
         )
 
 
 # -------------------------------
-# GET CURRENT BUS LOCATION
-# STUDENT LOGIN REQUIRED
+# GET BUS LOCATION
 # -------------------------------
 
 def get_bus_location(request, bus_id):
@@ -216,9 +211,7 @@ def get_bus_location(request, bus_id):
     if not request.user.is_authenticated:
 
         return JsonResponse(
-            {
-                "error": "Login required"
-            },
+            {"error": "Login required"},
             status=401
         )
 
@@ -227,20 +220,15 @@ def get_bus_location(request, bus_id):
         bus = Bus.objects.get(id=bus_id)
 
         return JsonResponse({
-
             "bus": bus.bus_number,
-
             "latitude": bus.latitude,
-
-            "longitude": bus.longitude
-
+            "longitude": bus.longitude,
+            "gps_active": bus.gps_active
         })
 
     except Bus.DoesNotExist:
 
         return JsonResponse(
-            {
-                "error": "Bus not found"
-            },
+            {"error": "Bus not found"},
             status=404
         )
