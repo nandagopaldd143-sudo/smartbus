@@ -28,7 +28,7 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("home")
+            return redirect("driver_dashboard")
 
         return render(
             request,
