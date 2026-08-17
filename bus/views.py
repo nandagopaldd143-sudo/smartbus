@@ -13,7 +13,7 @@ from .models import Bus
 def login_view(request):
 
     if request.user.is_authenticated:
-        return redirect("home")
+        return redirect("driver_dashboard")
 
     if request.method == "POST":
 
