@@ -53,16 +53,12 @@ def logout_view(request):
 
 
 # -------------------------------
-# HOME
+# BUS DETAILS
 # -------------------------------
 
-def home(request):
+def create_default_buses():
 
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    # Bus 46
-    bus46, created = Bus.objects.get_or_create(
+    bus46, _ = Bus.objects.get_or_create(
         bus_number="46",
         defaults={
             "time": "07:50",
@@ -73,8 +69,7 @@ def home(request):
         }
     )
 
-    # Bus 5
-    bus5, created = Bus.objects.get_or_create(
+    bus5, _ = Bus.objects.get_or_create(
         bus_number="5",
         defaults={
             "time": "07:50",
@@ -85,12 +80,31 @@ def home(request):
         }
     )
 
+    return bus46, bus5
+
+
+# -------------------------------
+# HOME
+# -------------------------------
+
+def home(request):
+
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    bus46, bus5 = create_default_buses()
+
     return render(
         request,
         "bus/home.html",
         {
             "bus46": bus46,
             "bus5": bus5,
+
+            "bus46_stop": "Polur Bus Stand",
+            "bus5_stop": "Anjaneyar Kovil, Polur",
+
+            "college": "Shanmuga Industries Arts and Science College",
         }
     )
 
@@ -122,13 +136,26 @@ def track_bus(request, bus_id):
 @ensure_csrf_cookie
 def driver_dashboard(request):
 
+    bus46, bus5 = create_default_buses()
+
     buses = Bus.objects.all().order_by("bus_number")
 
     return render(
         request,
         "bus/driver_dashboard.html",
         {
-            "buses": buses
+            "buses": buses,
+
+            "bus46": bus46,
+            "bus5": bus5,
+
+            "bus46_stop": "Polur Bus Stand",
+            "bus5_stop": "Anjaneyar Kovil, Polur",
+
+            "bus46_time": "7:50 AM",
+            "bus5_time": "7:50 AM",
+
+            "college": "Shanmuga Industries Arts and Science College",
         }
     )
 
@@ -139,13 +166,26 @@ def driver_dashboard(request):
 
 def student_dashboard(request):
 
-    buses = Bus.objects.all()
+    bus46, bus5 = create_default_buses()
+
+    buses = Bus.objects.all().order_by("bus_number")
 
     return render(
         request,
         "bus/student_dashboard.html",
         {
-            "buses": buses
+            "buses": buses,
+
+            "bus46": bus46,
+            "bus5": bus5,
+
+            "bus46_stop": "Polur Bus Stand",
+            "bus5_stop": "Anjaneyar Kovil, Polur",
+
+            "bus46_time": "7:50 AM",
+            "bus5_time": "7:50 AM",
+
+            "college": "Shanmuga Industries Arts and Science College",
         }
     )
 
