@@ -26,7 +26,7 @@
             align-items: center;
             padding: 22px 7%;
             background: rgba(0, 0, 0, 0.25);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            border-bottom: 1px solid rgba(255,255,255,0.12);
         }
 
         .logo {
@@ -41,7 +41,7 @@
             width: 45px;
             height: 45px;
             border-radius: 14px;
-            background: #ffffff;
+            background: white;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -63,7 +63,7 @@
         }
 
         .welcome {
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
 
         .welcome h1 {
@@ -83,7 +83,7 @@
             margin-top: 18px;
             padding: 9px 15px;
             border-radius: 20px;
-            background: rgba(54, 211, 153, 0.12);
+            background: rgba(54,211,153,0.12);
             color: #6fffc2;
             font-size: 14px;
         }
@@ -93,6 +93,57 @@
             height: 9px;
             background: #35e6a1;
             border-radius: 50%;
+        }
+
+        /* LOCATION */
+
+        .location-card {
+            margin: 25px 0 40px;
+            padding: 25px;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+            backdrop-filter: blur(15px);
+        }
+
+        .location-title {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .location-status {
+            color: #b8c5ff;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        .location-btn {
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 13px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(90deg, #249cff, #5865ff);
+        }
+
+        .coordinates {
+            margin-top: 18px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.20);
+            color: #dce4ff;
+            display: none;
+            line-height: 1.8;
+        }
+
+        .map-link {
+            display: none;
+            margin-top: 12px;
+            color: #6fc8ff;
+            text-decoration: none;
         }
 
         .section-title {
@@ -107,8 +158,8 @@
         }
 
         .bus-card {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
             border-radius: 22px;
             padding: 27px;
             backdrop-filter: blur(15px);
@@ -131,7 +182,7 @@
             width: 52px;
             height: 52px;
             border-radius: 15px;
-            background: linear-gradient(135deg, #36a9ff, #5f65ff);
+            background: linear-gradient(135deg,#36a9ff,#5f65ff);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -162,7 +213,7 @@
             font-weight: bold;
             padding: 14px;
             border-radius: 13px;
-            background: linear-gradient(90deg, #249cff, #5865ff);
+            background: linear-gradient(90deg,#249cff,#5865ff);
             margin-top: 25px;
         }
 
@@ -173,7 +224,7 @@
             font-size: 13px;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width:600px) {
 
             .header {
                 padding: 18px 5%;
@@ -225,6 +276,53 @@
     </section>
 
 
+    <!-- CURRENT LOCATION -->
+
+    <section class="location-card">
+
+        <div class="location-title">
+            📍 My Current Location
+        </div>
+
+        <div id="locationStatus" class="location-status">
+            Click the button below to get your real device location.
+        </div>
+
+        <button class="location-btn" onclick="getMyLocation()">
+            📍 Get My Current Location
+        </button>
+
+        <div id="coordinates" class="coordinates">
+
+            <div>
+                <strong>Latitude:</strong>
+                <span id="latitude">---</span>
+            </div>
+
+            <div>
+                <strong>Longitude:</strong>
+                <span id="longitude">---</span>
+            </div>
+
+            <div>
+                <strong>Accuracy:</strong>
+                <span id="accuracy">---</span> meters
+            </div>
+
+        </div>
+
+        <a
+            id="mapLink"
+            class="map-link"
+            href="#"
+            target="_blank"
+        >
+            🗺️ Open My Location in Google Maps
+        </a>
+
+    </section>
+
+
     <h2 class="section-title">
         Available Buses
     </h2>
@@ -249,7 +347,6 @@
 
             </div>
 
-
             <div class="info">
 
                 <div class="label">
@@ -261,7 +358,6 @@
                 </div>
 
             </div>
-
 
             <div class="info">
 
@@ -275,7 +371,6 @@
 
             </div>
 
-
             <div class="info">
 
                 <div class="label">
@@ -288,16 +383,14 @@
 
             </div>
 
-
-            <a href="{% url 'track_bus' bus46.id %}"
-               class="track-btn">
-
+            <a
+                href="{% url 'track_bus' bus46.id %}"
+                class="track-btn"
+            >
                 📍 Track This Bus
-
             </a>
 
         </div>
-
 
 
         <!-- BUS 5 -->
@@ -316,7 +409,6 @@
 
             </div>
 
-
             <div class="info">
 
                 <div class="label">
@@ -328,7 +420,6 @@
                 </div>
 
             </div>
-
 
             <div class="info">
 
@@ -342,7 +433,6 @@
 
             </div>
 
-
             <div class="info">
 
                 <div class="label">
@@ -355,16 +445,14 @@
 
             </div>
 
-
-            <a href="{% url 'track_bus' bus5.id %}"
-               class="track-btn">
-
+            <a
+                href="{% url 'track_bus' bus5.id %}"
+                class="track-btn"
+            >
                 📍 Track This Bus
-
             </a>
 
         </div>
-
 
     </div>
 
@@ -374,6 +462,97 @@
 <footer>
     © 2026 SmartBus • College Bus Tracking System
 </footer>
+
+
+<script>
+
+function getMyLocation() {
+
+    const status = document.getElementById("locationStatus");
+
+    const coordinates = document.getElementById("coordinates");
+
+    const mapLink = document.getElementById("mapLink");
+
+    if (!navigator.geolocation) {
+
+        status.innerHTML =
+            "❌ This browser does not support location.";
+
+        return;
+    }
+
+    status.innerHTML =
+        "📡 Getting your real device location... Please allow location permission.";
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            document.getElementById("latitude").textContent =
+                latitude.toFixed(6);
+
+            document.getElementById("longitude").textContent =
+                longitude.toFixed(6);
+
+            document.getElementById("accuracy").textContent =
+                Math.round(accuracy);
+
+            coordinates.style.display = "block";
+
+            mapLink.href =
+                "https://www.google.com/maps?q="
+                + latitude
+                + ","
+                + longitude;
+
+            mapLink.style.display = "block";
+
+            status.innerHTML =
+                "✅ Your real device location has been detected.";
+
+        },
+
+        function(error) {
+
+            if (error.code === 1) {
+
+                status.innerHTML =
+                    "❌ Location permission denied. Please allow Location permission in your browser.";
+
+            } else if (error.code === 2) {
+
+                status.innerHTML =
+                    "❌ Your location could not be detected. Turn ON GPS/Location.";
+
+            } else if (error.code === 3) {
+
+                status.innerHTML =
+                    "❌ Location request timed out. Try again.";
+
+            } else {
+
+                status.innerHTML =
+                    "❌ Unable to get your location.";
+
+            }
+
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        }
+
+    );
+}
+
+</script>
 
 </body>
 </html>
