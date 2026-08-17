@@ -122,9 +122,6 @@ def track_bus(request, bus_id):
 @ensure_csrf_cookie
 def driver_dashboard(request):
 
-    if not request.user.is_authenticated:
-        return redirect("login")
-
     buses = Bus.objects.all().order_by("bus_number")
 
     return render(
@@ -141,9 +138,6 @@ def driver_dashboard(request):
 # -------------------------------
 
 def student_dashboard(request):
-
-    if not request.user.is_authenticated:
-        return redirect("login")
 
     buses = Bus.objects.all()
 
