@@ -66,6 +66,19 @@ def home(request):
     if not request.user.is_authenticated:
         return redirect("login")
 
+    # Create a default bus if no bus exists
+    bus, created = Bus.objects.get_or_create(
+        id=1,
+        defaults={
+            "bus_number": "BUS001",
+            "time": "08:00",
+            "destination": "College",
+            "latitude": 0,
+            "longitude": 0,
+            "gps_active": False,
+        }
+    )
+
     buses = Bus.objects.all()
 
     return render(
