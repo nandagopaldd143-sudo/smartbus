@@ -110,10 +110,6 @@
             cursor: pointer;
         }
 
-        .gps-button:hover {
-            background: #0284c7;
-        }
-
         .gps-button.running {
             background: #16a34a;
         }
@@ -121,10 +117,6 @@
         .gps-button.stop {
             background: #dc2626;
             margin-top: 10px;
-        }
-
-        .gps-button:disabled {
-            opacity: 0.9;
         }
 
         .status {
@@ -172,29 +164,11 @@
             font-size: 14px;
         }
 
-        .logout:hover {
-            color: #38bdf8;
-        }
-
         footer {
             text-align: center;
             color: #64748b;
             font-size: 12px;
             padding: 20px 0;
-        }
-
-        @media (max-width: 500px) {
-            body {
-                padding: 12px;
-            }
-
-            h1 {
-                font-size: 25px;
-            }
-
-            .card {
-                padding: 17px;
-            }
         }
     </style>
 </head>
@@ -214,7 +188,7 @@
 
         <div class="subtitle">
             Start GPS when the bus service begins.
-            Your phone location will be shared with students.
+            Your phone's real location will be shared with students.
         </div>
     </header>
 
@@ -226,38 +200,52 @@
         </h2>
 
 
-        <!-- ================= BUS 5 ================= -->
+        {% for bus in buses %}
 
         <div class="bus-card">
 
             <div class="bus-header">
+
                 <div class="bus-number">
-                    🚌 Bus 5
+                    🚌 Bus {{ bus.bus_number }}
                 </div>
+
             </div>
+
 
             <div class="time">
-                ⏰ 7:50 AM
+                ⏰ {{ bus.time }}
             </div>
+
 
             <div class="destination">
-                📍 Shanmuga Industries Arts and Science College
+                📍 {{ bus.destination }}
             </div>
 
+
+            <!--
+                IMPORTANT:
+                bus.id comes directly from database.
+                No hard-coded 1 or 2.
+            -->
 
             <button
                 class="gps-button"
-                id="gpsButton5"
-                onclick="startGPS(2, '5')">
+                id="gpsButton{{ bus.bus_number }}"
+                onclick="startGPS(
+                    {{ bus.id }},
+                    '{{ bus.bus_number }}'
+                )">
 
                 📡 START LIVE GPS
 
             </button>
 
+
             <button
                 class="gps-button stop"
-                id="stopButton5"
-                onclick="stopGPS('5')"
+                id="stopButton{{ bus.bus_number }}"
+                onclick="stopGPS('{{ bus.bus_number }}')"
                 style="display:none;">
 
                 🔴 STOP GPS
@@ -267,7 +255,7 @@
 
             <div
                 class="status"
-                id="status5">
+                id="status{{ bus.bus_number }}">
 
                 🔵 GPS not started
 
@@ -276,7 +264,7 @@
 
             <div
                 class="location-box"
-                id="locationBox5"
+                id="locationBox{{ bus.bus_number }}"
                 style="display:none;">
 
                 <div class="location-title">
@@ -285,7 +273,7 @@
 
                 <div
                     class="location-text"
-                    id="location5">
+                    id="location{{ bus.bus_number }}">
 
                     Waiting...
 
@@ -293,7 +281,7 @@
 
                 <div
                     class="accuracy"
-                    id="accuracy5">
+                    id="accuracy{{ bus.bus_number }}">
 
                     GPS accuracy: Waiting...
 
@@ -303,84 +291,13 @@
 
         </div>
 
+        {% empty %}
 
-
-        <!-- ================= BUS 46 ================= -->
-
-        <div class="bus-card">
-
-            <div class="bus-header">
-                <div class="bus-number">
-                    🚌 Bus 46
-                </div>
-            </div>
-
-            <div class="time">
-                ⏰ 7:50 AM
-            </div>
-
-            <div class="destination">
-                📍 Shanmuga Industries Arts and Science College
-            </div>
-
-
-            <button
-                class="gps-button"
-                id="gpsButton46"
-                onclick="startGPS(1, '46')">
-
-                📡 START LIVE GPS
-
-            </button>
-
-            <button
-                class="gps-button stop"
-                id="stopButton46"
-                onclick="stopGPS('46')"
-                style="display:none;">
-
-                🔴 STOP GPS
-
-            </button>
-
-
-            <div
-                class="status"
-                id="status46">
-
-                🔵 GPS not started
-
-            </div>
-
-
-            <div
-                class="location-box"
-                id="locationBox46"
-                style="display:none;">
-
-                <div class="location-title">
-                    📍 DRIVER CURRENT LOCATION
-                </div>
-
-                <div
-                    class="location-text"
-                    id="location46">
-
-                    Waiting...
-
-                </div>
-
-                <div
-                    class="accuracy"
-                    id="accuracy46">
-
-                    GPS accuracy: Waiting...
-
-                </div>
-
-            </div>
-
+        <div class="status">
+            🔴 No buses found in database.
         </div>
+
+        {% endfor %}
 
     </div>
 
@@ -408,40 +325,27 @@ let activeBusId = null;
 let activeBusNumber = null;
 
 
-/* ================================
+/* =================================
    CSRF TOKEN
-================================ */
+================================= */
 
 function getCookie(name) {
 
     let cookieValue = null;
 
-    if (
-        document.cookie &&
-        document.cookie !== ""
-    ) {
+    if (document.cookie && document.cookie !== "") {
 
-        const cookies =
-            document.cookie.split(";");
+        const cookies = document.cookie.split(";");
 
-        for (
-            let cookie of cookies
-        ) {
+        for (let cookie of cookies) {
 
             cookie = cookie.trim();
 
-            if (
-                cookie.startsWith(
-                    name + "="
-                )
-            ) {
+            if (cookie.startsWith(name + "=")) {
 
-                cookieValue =
-                    decodeURIComponent(
-                        cookie.substring(
-                            name.length + 1
-                        )
-                    );
+                cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
 
                 break;
             }
@@ -452,18 +356,14 @@ function getCookie(name) {
 }
 
 
-const csrfToken =
-    getCookie("csrftoken");
+const csrfToken = getCookie("csrftoken");
 
 
-/* ================================
-   START GPS
-================================ */
+/* =================================
+   START REAL PHONE GPS
+================================= */
 
-function startGPS(
-    busId,
-    busNumber
-) {
+function startGPS(busId, busNumber) {
 
     const button =
         document.getElementById(
@@ -495,7 +395,10 @@ function startGPS(
     }
 
 
-    /* Stop any previous bus GPS */
+    /*
+        Stop another GPS session
+        before starting this bus.
+    */
 
     if (activeWatch !== null) {
 
@@ -512,29 +415,24 @@ function startGPS(
 
 
     status.innerHTML =
-        "🟡 Requesting GPS permission...";
+        "🟡 Requesting real GPS permission...";
 
 
     button.disabled = true;
 
-    button.classList.add(
-        "running"
-    );
+    button.classList.add("running");
 
     button.innerHTML =
         "🟢 LIVE GPS RUNNING";
 
 
-    stopButton.style.display =
-        "block";
+    stopButton.style.display = "block";
 
-
-    locationBox.style.display =
-        "block";
+    locationBox.style.display = "block";
 
 
     /*
-       START PHONE GPS WATCH
+        REAL DEVICE GPS
     */
 
     activeWatch =
@@ -553,7 +451,7 @@ function startGPS(
 
 
                 /*
-                   SHOW LOCATION
+                    SHOW REAL LOCATION
                 */
 
                 document.getElementById(
@@ -575,12 +473,13 @@ function startGPS(
 
 
                 status.innerHTML =
-                    "🟢 GPS ACTIVE<br>" +
-                    "📡 Sending live location to server...";
+                    "🟢 REAL GPS ACTIVE<br>" +
+                    "📡 Sending driver location...";
 
 
                 /*
-                   SEND TO DJANGO
+                    SEND REAL GPS
+                    TO DJANGO
                 */
 
                 sendLocation(
@@ -596,8 +495,7 @@ function startGPS(
 
             function(error) {
 
-                button.disabled =
-                    false;
+                button.disabled = false;
 
                 button.classList.remove(
                     "running"
@@ -610,33 +508,27 @@ function startGPS(
                     "none";
 
 
-                if (
-                    error.code === 1
-                ) {
+                if (error.code === 1) {
 
                     status.innerHTML =
                         "🔴 Location permission denied.<br>" +
-                        "Please allow Location permission.";
+                        "Allow location permission.";
 
                 }
 
-                else if (
-                    error.code === 2
-                ) {
+                else if (error.code === 2) {
 
                     status.innerHTML =
                         "🔴 Location unavailable.<br>" +
-                        "Turn ON phone GPS.";
+                        "Turn ON phone Location/GPS.";
 
                 }
 
-                else if (
-                    error.code === 3
-                ) {
+                else if (error.code === 3) {
 
                     status.innerHTML =
                         "🔴 GPS timeout.<br>" +
-                        "Please try again.";
+                        "Move to an open area and try again.";
 
                 }
 
@@ -653,9 +545,9 @@ function startGPS(
             {
                 enableHighAccuracy: true,
 
-                maximumAge: 5000,
+                timeout: 20000,
 
-                timeout: 15000
+                maximumAge: 0
             }
 
         );
@@ -663,9 +555,9 @@ function startGPS(
 }
 
 
-/* ================================
-   SEND LOCATION TO DJANGO
-================================ */
+/* =================================
+   SEND LOCATION
+================================= */
 
 function sendLocation(
     busId,
@@ -697,7 +589,6 @@ function sendLocation(
     fetch(
         url,
         {
-
             method: "POST",
 
             headers: {
@@ -706,80 +597,69 @@ function sendLocation(
                     csrfToken,
 
                 "Content-Type":
-                    "application/x-www-form-urlencoded"
-
+                    "application/x-www-form-urlencoded; charset=UTF-8"
             },
 
             body:
-                formData.toString()
+                formData.toString(),
 
+            credentials:
+                "same-origin"
         }
     )
 
-    .then(
-        response => {
+    .then(response => {
 
-            if (!response.ok) {
+        if (!response.ok) {
 
-                throw new Error(
-                    "Server returned " +
-                    response.status
-                );
-
-            }
-
-            return response.json();
-
-        }
-    )
-
-    .then(
-        data => {
-
-            if (
-                data.success
-            ) {
-
-                status.innerHTML =
-                    "🟢 LIVE GPS ACTIVE<br>" +
-                    "📡 Location sent to SmartBus";
-
-
-            } else {
-
-                status.innerHTML =
-                    "🔴 Server GPS update failed";
-
-            }
-
-        }
-    )
-
-    .catch(
-        error => {
-
-            console.error(
-                "GPS server error:",
-                error
+            throw new Error(
+                "Server returned " +
+                response.status
             );
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        if (data.success) {
 
             status.innerHTML =
-                "🔴 Server connection failed<br>" +
-                "GPS is still running on phone.";
+                "🟢 LIVE GPS ACTIVE<br>" +
+                "📡 Real location sent successfully";
+
+        } else {
+
+            status.innerHTML =
+                "🔴 Server GPS update failed";
 
         }
-    );
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "GPS server error:",
+            error
+        );
+
+        status.innerHTML =
+            "🔴 Server connection failed<br>" +
+            "Phone GPS is still running.";
+
+    });
 
 }
 
 
-/* ================================
+/* =================================
    STOP GPS
-================================ */
+================================= */
 
-function stopGPS(
-    busNumber
-) {
+function stopGPS(busNumber) {
 
     const button =
         document.getElementById(
@@ -808,11 +688,11 @@ function stopGPS(
 
 
     activeBusId = null;
+
     activeBusNumber = null;
 
 
-    button.disabled =
-        false;
+    button.disabled = false;
 
     button.classList.remove(
         "running"
@@ -828,13 +708,6 @@ function stopGPS(
 
     status.innerHTML =
         "🔴 GPS stopped";
-
-
-    /*
-       Important:
-       Student will no longer receive
-       fresh GPS updates after this point.
-    */
 
 }
 
