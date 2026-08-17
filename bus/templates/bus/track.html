@@ -1,8 +1,13 @@
  <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>SmartBus • Live Tracking</title>
 
@@ -12,6 +17,7 @@
     >
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -19,7 +25,13 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: linear-gradient(135deg,#07111f,#101b33,#07111f);
+            background:
+                linear-gradient(
+                    135deg,
+                    #07111f,
+                    #101b33,
+                    #07111f
+                );
             color: white;
             min-height: 100vh;
         }
@@ -184,6 +196,7 @@
         }
 
         @media(max-width:600px) {
+
             .details {
                 grid-template-columns: 1fr;
             }
@@ -195,34 +208,55 @@
             .location-info {
                 grid-template-columns: 1fr;
             }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
+
 <div class="header">
-    <h1>🚌 SMARTBUS • LIVE TRACKING</h1>
-    <p>COLLEGE BUS TRACKING SYSTEM</p>
+
+    <h1>
+        🚌 SMARTBUS • LIVE TRACKING
+    </h1>
+
+    <p>
+        COLLEGE BUS TRACKING SYSTEM
+    </p>
+
 </div>
 
+
 <div class="container">
+
 
     <div class="card">
 
         <div class="bus-title">
 
-            <div class="bus-icon">🚌</div>
+            <div class="bus-icon">
+                🚌
+            </div>
 
             <div>
-                <h2>Bus {{ bus.bus_number }}</h2>
+
+                <h2>
+                    Bus {{ bus.bus_number }}
+                </h2>
 
                 <span class="live-badge">
                     ● LIVE TRACKING
                 </span>
+
             </div>
 
         </div>
+
 
         <div class="details">
 
@@ -238,6 +272,7 @@
 
             </div>
 
+
             <div class="detail-box">
 
                 <div class="detail-label">
@@ -252,6 +287,7 @@
 
         </div>
 
+
         <div class="status">
 
             <span
@@ -260,7 +296,7 @@
             </span>
 
             <span id="statusText">
-                Waiting for bus GPS...
+                Waiting for real bus GPS...
             </span>
 
         </div>
@@ -268,11 +304,13 @@
     </div>
 
 
+
     <div class="card">
 
         <h2 style="margin-top:0;">
             📍 Current Bus Location
         </h2>
+
 
         <div id="map"></div>
 
@@ -313,13 +351,15 @@
                 🏠 BUS CURRENT LOCATION
             </div>
 
+
             <div
                 id="address"
                 class="address-text">
 
-                Waiting for live location...
+                Waiting for real driver GPS...
 
             </div>
+
 
             <div
                 id="accuracy"
@@ -336,22 +376,33 @@
 </div>
 
 
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 
 <script>
 
+
+/*
+    IMPORTANT
+
+    We use the exact database ID
+    of this bus.
+
+*/
+
 const busId = "{{ bus.id }}";
 
 
-// Default map: Polur
-const defaultLat = 12.5036;
-const defaultLng = 79.0608;
+/*
+    DO NOT use a fake/default bus location.
 
+    Map starts without a bus marker.
+*/
 
 const map = L.map("map").setView(
-    [defaultLat, defaultLng],
-    14
+    [20, 78],
+    5
 );
 
 
@@ -359,17 +410,22 @@ L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         maxZoom: 19,
+
         attribution:
             "&copy; OpenStreetMap contributors"
     }
 ).addTo(map);
 
 
-// Bus marker
+
+/*
+    BUS MARKER
+*/
+
 let busMarker = null;
 
 
-// Custom bus icon
+
 const busIcon = L.divIcon({
 
     className: "bus-marker",
@@ -390,9 +446,10 @@ const busIcon = L.divIcon({
 });
 
 
-// ==========================================
-// GET BUS LOCATION FROM DJANGO
-// ==========================================
+
+/*
+    GET BUS LOCATION
+*/
 
 async function getBusLocation() {
 
@@ -401,7 +458,11 @@ async function getBusLocation() {
         const response = await fetch(
             `/api/bus/${busId}/location/`,
             {
-                cache: "no-store"
+                method: "GET",
+
+                cache: "no-store",
+
+                credentials: "same-origin"
             }
         );
 
@@ -420,19 +481,56 @@ async function getBusLocation() {
             await response.json();
 
 
+        console.log(
+            "BUS GPS DATA:",
+            data
+        );
+
+
         const latitude =
             Number(data.latitude);
+
 
         const longitude =
             Number(data.longitude);
 
 
-        // IMPORTANT
-        // 0 means GPS not received yet
+        /*
+            GPS MUST BE ACTIVE
+        */
 
         if (
-            !latitude ||
-            !longitude ||
+            data.gps_active !== true
+        ) {
+
+            document.getElementById(
+                "statusDot"
+            ).classList.remove("live");
+
+
+            document.getElementById(
+                "statusText"
+            ).innerText =
+                "🔴 Driver GPS is not active";
+
+
+            document.getElementById(
+                "address"
+            ).innerText =
+                "Waiting for driver to start GPS";
+
+
+            return;
+        }
+
+
+        /*
+            CHECK VALID GPS
+        */
+
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude) ||
             latitude === 0 ||
             longitude === 0
         ) {
@@ -440,40 +538,47 @@ async function getBusLocation() {
             document.getElementById(
                 "statusText"
             ).innerText =
-                "🔴 Waiting for driver GPS...";
+                "🟡 GPS active, waiting for coordinates";
+
 
             return;
         }
 
 
-        // Show location
+        /*
+            VALID REAL GPS
+        */
+
         showBusLocation(
             latitude,
             longitude
         );
 
-
     }
+
+
     catch(error) {
 
-        console.log(
-            "Location error:",
+        console.error(
+            "Bus location error:",
             error
         );
+
 
         document.getElementById(
             "statusText"
         ).innerText =
-            "🔴 Unable to get bus location";
+            "🔴 Unable to connect to bus GPS";
 
     }
 
 }
 
 
-// ==========================================
-// SHOW BUS ON MAP
-// ==========================================
+
+/*
+    SHOW ACTUAL BUS GPS
+*/
 
 function showBusLocation(
     latitude,
@@ -493,18 +598,11 @@ function showBusLocation(
         longitude.toFixed(6);
 
 
-    // Marker already exists
-    if (busMarker) {
+    /*
+        CREATE MARKER
+    */
 
-        busMarker.setLatLng([
-            latitude,
-            longitude
-        ]);
-
-    }
-
-    // First time marker
-    else {
+    if (!busMarker) {
 
         busMarker = L.marker(
             [
@@ -519,13 +617,32 @@ function showBusLocation(
 
         busMarker.bindPopup(
             "🚌 BUS {{ bus.bus_number }}<br>" +
-            "📍 Live Location"
+            "📍 REAL LIVE GPS"
         );
 
     }
 
 
-    // Move map to bus
+    /*
+        MOVE EXISTING MARKER
+    */
+
+    else {
+
+        busMarker.setLatLng(
+            [
+                latitude,
+                longitude
+            ]
+        );
+
+    }
+
+
+    /*
+        CENTER MAP ON REAL BUS
+    */
+
     map.setView(
         [
             latitude,
@@ -535,19 +652,27 @@ function showBusLocation(
     );
 
 
-    // Live status
+    /*
+        LIVE STATUS
+    */
+
     document
-        .getElementById("statusDot")
+        .getElementById(
+            "statusDot"
+        )
         .classList.add("live");
 
 
     document.getElementById(
         "statusText"
     ).innerText =
-        "🟢 Live location available";
+        "🟢 REAL LIVE BUS LOCATION";
 
 
-    // Get actual street/place
+    /*
+        GET ADDRESS
+    */
+
     getAddress(
         latitude,
         longitude
@@ -556,9 +681,13 @@ function showBusLocation(
 }
 
 
-// ==========================================
-// GET ACTUAL STREET / PLACE
-// ==========================================
+
+/*
+    REVERSE GEOCODING
+
+    Converts actual GPS coordinates
+    into street/place name.
+*/
 
 async function getAddress(
     latitude,
@@ -580,14 +709,24 @@ async function getAddress(
         const url =
             "https://nominatim.openstreetmap.org/reverse" +
             "?format=jsonv2" +
-            "&lat=" + latitude +
-            "&lon=" + longitude +
+            "&lat=" +
+            encodeURIComponent(latitude) +
+            "&lon=" +
+            encodeURIComponent(longitude) +
             "&zoom=18" +
             "&addressdetails=1";
 
 
         const response =
-            await fetch(url);
+            await fetch(
+                url,
+                {
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
 
 
         if (!response.ok) {
@@ -605,7 +744,6 @@ async function getAddress(
 
         if (data.display_name) {
 
-            // EXACT GPS LOCATION ADDRESS
             addressElement.innerText =
                 data.display_name;
 
@@ -619,9 +757,10 @@ async function getAddress(
         }
 
     }
+
     catch(error) {
 
-        console.log(
+        console.error(
             "Address error:",
             error
         );
@@ -635,21 +774,27 @@ async function getAddress(
 }
 
 
-// ==========================================
-// START LIVE TRACKING
-// ==========================================
 
-// First check immediately
+/*
+    START
+*/
+
 getBusLocation();
 
 
-// Then update every 3 seconds
+
+/*
+    UPDATE EVERY 3 SECONDS
+*/
+
 setInterval(
     getBusLocation,
     3000
 );
 
+
 </script>
+
 
 </body>
 </html>
